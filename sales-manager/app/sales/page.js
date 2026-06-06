@@ -188,8 +188,13 @@ export default function SalesInput() {
     )]
     for (const key of newMemberKeys) {
       const [name, phone] = key.split('|')
-      const { data, error } = await supabase.from('members').insert({ name, phone }).select().single()
-      if (error) { toast.error(`회원 생성 실패: ${name}`); setImporting(false); return }
+      // 이미 존재하면 기존 데이터 사용, 없으면 생성
+      let { data } = await supabase.from('members').select('*').eq('name', name).eq('phone', phone).single()
+      if (!data) {
+        const res = await supabase.from('members').insert({ name, phone }).select().single()
+        if (res.error) { toast.error(`회원 생성 실패: ${name} (${res.error.message})`); setImporting(false); return }
+        data = res.data
+      }
       memberMap[key] = data
     }
 
@@ -199,8 +204,12 @@ export default function SalesInput() {
       importRows.filter(r => !r.channel && r.channelRaw).map(r => r.channelRaw)
     )]
     for (const name of newChannelNames) {
-      const { data, error } = await supabase.from('channels').insert({ name }).select().single()
-      if (error) { toast.error(`채널 생성 실패: ${name}`); setImporting(false); return }
+      let { data } = await supabase.from('channels').select('*').eq('name', name).single()
+      if (!data) {
+        const res = await supabase.from('channels').insert({ name }).select().single()
+        if (res.error) { toast.error(`채널 생성 실패: ${name}`); setImporting(false); return }
+        data = res.data
+      }
       channelMap[name] = data
     }
 
@@ -214,8 +223,12 @@ export default function SalesInput() {
         }).filter(Boolean))
     )]
     for (const name of newProductNames) {
-      const { data, error } = await supabase.from('products').insert({ name, price: 0 }).select().single()
-      if (error) { toast.error(`상품 생성 실패: ${name}`); setImporting(false); return }
+      let { data } = await supabase.from('products').select('*').eq('name', name).single()
+      if (!data) {
+        const res = await supabase.from('products').insert({ name, price: 0 }).select().single()
+        if (res.error) { toast.error(`상품 생성 실패: ${name}`); setImporting(false); return }
+        data = res.data
+      }
       productMap[name.toLowerCase()] = data
     }
 
