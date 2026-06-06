@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
+import * as XLSX from 'xlsx'
 
 export default function History() {
   const [sales, setSales] = useState([])
@@ -48,6 +49,25 @@ export default function History() {
   })
 
   const totalRevenue = filtered.reduce((sum, s) => sum + (s.total_price || 0), 0)
+
+  function downloadExcel() {
+    const rows = filtered.map((s, i) => ({
+      번호: i + 1,
+      회원명: s.members?.name || '',
+      전화번호: s.members?.phone || '',
+      상품: s.products?.name || '',
+      채널: s.channels?.name || '',
+      수량: s.quantity,
+      금액: s.total_price,
+      판매월: s.sale_month || '',
+      메모: s.note || '',
+      판매일: s.sold_at?.slice(0, 16).replace('T', ' '),
+    }))
+    const ws = XLSX.utils.json_to_sheet(rows)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, '판매내역')
+    XLSX.writeFile(wb, `판매내역_${new Date().toISOString().slice(0,10)}.xlsx`)
+  }
   const paged = pageSize === 0 ? filtered : filtered.slice((page - 1) * pageSize, page * pageSize)
   const totalPages = pageSize === 0 ? 1 : Math.ceil(filtered.length / pageSize)
 
@@ -88,6 +108,7 @@ export default function History() {
           {[10, 50, 100, 200].map(n => <option key={n} value={n}>{n}개씩 보기</option>)}
           <option value={0}>전체 보기</option>
         </select>
+        <button onClick={downloadExcel} className="bg-emerald-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-emerald-600 transition">엑셀 다운로드</button>
         <span className="ml-auto text-sm font-medium text-indigo-700">합계: {totalRevenue.toLocaleString()}원</span>
       </div>
 

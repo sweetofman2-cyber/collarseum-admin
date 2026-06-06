@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
+import * as XLSX from 'xlsx'
 
 export default function Members() {
   const [members, setMembers] = useState([])
@@ -56,6 +57,24 @@ export default function Members() {
   const filtered = members.filter(m =>
     m.name.includes(search) || m.phone.includes(search)
   )
+
+  function downloadExcel() {
+    const rows = filtered.map((m, i) => {
+      const months = [...new Set((m.sales || []).map(s => s.sale_month).filter(Boolean))].sort()
+      return {
+        번호: i + 1,
+        이름: m.name,
+        휴대폰: m.phone || '',
+        구매횟수: m.sales?.length ?? 0,
+        판매월: months.join(', '),
+        등록일: m.created_at?.slice(0, 10),
+      }
+    })
+    const ws = XLSX.utils.json_to_sheet(rows)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, '회원목록')
+    XLSX.writeFile(wb, `회원목록_${new Date().toISOString().slice(0,10)}.xlsx`)
+  }
   const paged = pageSize === 0 ? filtered : filtered.slice((page - 1) * pageSize, page * pageSize)
   const totalPages = pageSize === 0 ? 1 : Math.ceil(filtered.length / pageSize)
 
@@ -109,6 +128,7 @@ export default function Members() {
           onChange={e => setSearch(e.target.value)}
         />
         <span className="ml-3 text-sm text-gray-500">총 {filtered.length}명</span>
+        <button onClick={downloadExcel} className="ml-3 bg-emerald-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-emerald-600 transition">엑셀 다운로드</button>
         <select
           className="ml-auto border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
           value={pageSize}
