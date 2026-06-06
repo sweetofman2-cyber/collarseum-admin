@@ -124,6 +124,7 @@ export default function Members() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-500 text-left">
             <tr>
+              <th className="px-4 py-3">번호</th>
               <th className="px-4 py-3">이름</th>
               <th className="px-4 py-3">휴대폰</th>
               <th className="px-4 py-3">구매 횟수</th>
@@ -134,13 +135,15 @@ export default function Members() {
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400">회원이 없습니다.</td></tr>
-            ) : paged.map(m => {
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">회원이 없습니다.</td></tr>
+            ) : paged.map((m, i) => {
+              const rowNum = pageSize === 0 ? i + 1 : (page - 1) * pageSize + i + 1
               const months = [...new Set(
                 (m.sales || []).map(s => s.sale_month).filter(Boolean)
               )].sort()
               return (
               <tr key={m.id} className="border-t hover:bg-gray-50">
+                <td className="px-4 py-3 text-gray-400 text-xs">{rowNum}</td>
                 <td className="px-4 py-3 font-medium">{m.name}</td>
                 <td className="px-4 py-3 text-gray-600">{m.phone}</td>
                 <td className="px-4 py-3 text-center">

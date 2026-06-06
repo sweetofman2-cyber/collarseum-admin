@@ -98,6 +98,7 @@ export default function History() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-500 text-left">
               <tr>
+                <th className="px-4 py-3">번호</th>
                 <th className="px-4 py-3">회원명</th>
                 <th className="px-4 py-3">전화번호</th>
                 <th className="px-4 py-3">상품</th>
@@ -112,9 +113,10 @@ export default function History() {
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={10} className="px-4 py-8 text-center text-gray-400">내역이 없습니다.</td></tr>
-              ) : paged.map(s => (
+                <tr><td colSpan={11} className="px-4 py-8 text-center text-gray-400">내역이 없습니다.</td></tr>
+              ) : paged.map((s, i) => (
                 <tr key={s.id} className="border-t hover:bg-gray-50">
+                  <td className="px-4 py-3 text-gray-400 text-xs">{pageSize === 0 ? i + 1 : (page - 1) * pageSize + i + 1}</td>
                   <td className="px-4 py-3 font-medium">{s.members?.name}</td>
                   <td className="px-4 py-3 text-gray-500">{s.members?.phone}</td>
                   <td className="px-4 py-3">{s.products?.name}</td>
