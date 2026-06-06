@@ -1,9 +1,46 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
+import * as XLSX from 'xlsx'
 
 const emptyForm = { member_id: '', phone: '', product_id: '', channel_id: '', quantity: 1, note: '' }
+
+// 비고 문자열에서 상품+수량 목록 파싱
+// 예: "레전드실버2 타임1" → [{product, qty}, ...]
+function parseBigo(bigo, products) {
+  if (!bigo) return []
+  const normalized = products.map(p => ({
+    ...p,
+    key: p.name.replace(/\s/g, '').toLowerCase(),
+  })).sort((a, b) => b.key.length - a.key.length) // 긴 이름 먼저 매칭
+
+  const results = []
+  const tokens = String(bigo).trim().split(/\s+/)
+
+  for (const token of tokens) {
+    let remaining = token.toLowerCase()
+    while (remaining.length > 0) {
+      const match = normalized.find(p => remaining.startsWith(p.key))
+      if (match) {
+        remaining = remaining.slice(match.key.length)
+        const qty = parseInt(remaining, 10) || 1
+        remaining = remaining.replace(/^\d+/, '')
+        results.push({ product: match, qty })
+      } else {
+        break
+      }
+    }
+  }
+  return results
+}
+
+// 채널 매칭 (부분 문자열)
+function matchChannel(cellValue, channels) {
+  if (!cellValue) return null
+  const v = String(cellValue).trim()
+  return channels.find(c => c.name.includes(v) || v.includes(c.name.replace(/\s/g, ''))) || null
+}
 
 export default function SalesInput() {
   const [form, setForm] = useState(emptyForm)
@@ -14,6 +51,11 @@ export default function SalesInput() {
   const [loading, setLoading] = useState(false)
   const [selectedMember, setSelectedMember] = useState(null)
   const [selectedProduct, setSelectedProduct] = useState(null)
+
+  // 엑셀 일괄 입력
+  const [importRows, setImportRows] = useState(null) // 파싱된 미리보기 행
+  const [importing, setImporting] = useState(false)
+  const fileRef = useRef()
 
   useEffect(() => {
     async function load() {
@@ -76,11 +118,164 @@ export default function SalesInput() {
     setSelectedProduct(null)
   }
 
+  // 엑셀 파일 선택 → 파싱 → 미리보기
+  function handleExcelFile(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (evt) => {
+      const wb = XLSX.read(evt.target.result, { type: 'array' })
+      const ws = wb.Sheets[wb.SheetNames[0]]
+      const raw = XLSX.utils.sheet_to_json(ws, { defval: '' })
+
+      const rows = []
+      for (const row of raw) {
+        const nameRaw = row['이름'] || row['name'] || ''
+        const phoneRaw = row['전번'] || row['전화'] || row['phone'] || ''
+        const channelRaw = row['채널'] || row['channel'] || ''
+        const bigoRaw = row['비고'] || row['note'] || ''
+
+        const name = String(nameRaw).replace(/\s*님\s*$/, '').trim()
+        const phone = String(phoneRaw).trim()
+
+        // 회원 매칭 (이름 or 전번)
+        const member = members.find(m =>
+          m.name === name ||
+          m.phone === phone ||
+          m.phone.replace(/-/g, '') === phone.replace(/-/g, '')
+        )
+
+        const channel = matchChannel(channelRaw, channels)
+        const items = parseBigo(bigoRaw, products)
+
+        if (items.length === 0) {
+          rows.push({ name, phone, channelRaw, bigoRaw, member, channel, items: [], error: '상품 파싱 실패' })
+        } else {
+          for (const item of items) {
+            rows.push({ name, phone, channelRaw, bigoRaw, member, channel, product: item.product, qty: item.qty, error: null })
+          }
+        }
+      }
+      setImportRows(rows)
+    }
+    reader.readAsArrayBuffer(file)
+    e.target.value = ''
+  }
+
+  // 일괄 등록
+  async function handleImport() {
+    const valid = importRows.filter(r => r.member && r.channel && r.product && !r.error)
+    if (!valid.length) return toast.error('등록 가능한 행이 없습니다.')
+    setImporting(true)
+    const inserts = valid.map(r => ({
+      member_id: r.member.id,
+      product_id: r.product.id,
+      channel_id: r.channel.id,
+      quantity: r.qty,
+      total_price: r.product.price * r.qty,
+      note: r.bigoRaw || null,
+    }))
+    const { error } = await supabase.from('sales').insert(inserts)
+    setImporting(false)
+    if (error) { toast.error('일괄 등록 실패: ' + error.message); return }
+    toast.success(`${valid.length}건 등록 완료!`)
+    setImportRows(null)
+  }
+
   return (
-    <div className="max-w-lg mx-auto">
+    <div className="max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">판매 입력</h1>
 
+      {/* 엑셀 일괄 입력 */}
+      <div className="bg-white rounded-xl shadow p-5 mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="text-base font-semibold text-gray-700">엑셀 일괄 입력</h2>
+            <p className="text-xs text-gray-400 mt-0.5">이름, 전번, 채널, 비고 열이 있는 엑셀 파일을 올려주세요.</p>
+          </div>
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 transition"
+          >
+            엑셀 파일 선택
+          </button>
+          <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleExcelFile} />
+        </div>
+
+        {importRows && (
+          <>
+            <div className="overflow-x-auto rounded-lg border border-gray-200 mb-3">
+              <table className="w-full text-xs">
+                <thead className="bg-gray-50 text-gray-500">
+                  <tr>
+                    <th className="px-3 py-2 text-left">이름</th>
+                    <th className="px-3 py-2 text-left">채널</th>
+                    <th className="px-3 py-2 text-left">상품</th>
+                    <th className="px-3 py-2 text-center">수량</th>
+                    <th className="px-3 py-2 text-right">금액</th>
+                    <th className="px-3 py-2 text-center">상태</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {importRows.map((r, i) => {
+                    const ok = r.member && r.channel && r.product && !r.error
+                    return (
+                      <tr key={i} className={ok ? '' : 'bg-red-50'}>
+                        <td className="px-3 py-2">
+                          {r.member
+                            ? <span className="text-gray-800">{r.member.name}</span>
+                            : <span className="text-red-500">{r.name} (미매칭)</span>}
+                        </td>
+                        <td className="px-3 py-2">
+                          {r.channel
+                            ? <span className="text-gray-700">{r.channel.name}</span>
+                            : <span className="text-red-500">{r.channelRaw} (미매칭)</span>}
+                        </td>
+                        <td className="px-3 py-2">
+                          {r.product
+                            ? <span className="text-gray-700">{r.product.name}</span>
+                            : <span className="text-red-500">{r.bigoRaw} (파싱 실패)</span>}
+                        </td>
+                        <td className="px-3 py-2 text-center">{r.qty || '-'}</td>
+                        <td className="px-3 py-2 text-right">
+                          {r.product ? (r.product.price * r.qty).toLocaleString() + '원' : '-'}
+                        </td>
+                        <td className="px-3 py-2 text-center">
+                          {ok
+                            ? <span className="text-emerald-500 font-medium">OK</span>
+                            : <span className="text-red-400 font-medium">오류</span>}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500">
+                총 {importRows.length}건 중 등록 가능: <strong className="text-emerald-600">{importRows.filter(r => r.member && r.channel && r.product && !r.error).length}건</strong>
+                {importRows.some(r => !r.member || !r.channel || !r.product) && (
+                  <span className="text-red-400 ml-2">/ 오류: {importRows.filter(r => !r.member || !r.channel || !r.product || r.error).length}건</span>
+                )}
+              </span>
+              <div className="flex gap-2">
+                <button onClick={() => setImportRows(null)} className="px-4 py-2 text-sm bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition">취소</button>
+                <button
+                  onClick={handleImport}
+                  disabled={importing}
+                  className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition"
+                >
+                  {importing ? '등록 중...' : '일괄 등록'}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* 개별 입력 폼 */}
       <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow p-6 flex flex-col gap-5">
+        <h2 className="text-base font-semibold text-gray-700 -mb-2">개별 입력</h2>
 
         {/* 회원 검색 */}
         <div>
