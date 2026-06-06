@@ -18,6 +18,7 @@ export default function Members() {
       .from('members')
       .select('*, sales(id, sale_month)')
       .order('created_at', { ascending: false })
+      .limit(10000)
     setMembers(data || [])
   }
 

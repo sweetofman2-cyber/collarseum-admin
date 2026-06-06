@@ -20,6 +20,7 @@ export default function History() {
       .from('sales')
       .select('*, members(name, phone), products(name, price), channels(name)')
       .order('sold_at', { ascending: false })
+      .limit(10000)
     setSales(data || [])
     setLoading(false)
   }
