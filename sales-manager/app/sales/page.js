@@ -190,12 +190,19 @@ export default function SalesInput() {
       const [name, rawPhone] = key.split('|')
       const phone = rawPhone || null
 
-      // 이름+전번으로 기존 회원 검색
-      let query = supabase.from('members').select('*').eq('name', name)
-      if (phone) query = query.eq('phone', phone)
-      else query = query.is('phone', null)
-      let { data } = await query.maybeSingle()
+      let data = null
 
+      // 전화번호가 있으면 전화번호로만 검색 (이름이 달라도 같은 회원으로 처리)
+      if (phone) {
+        const res = await supabase.from('members').select('*').eq('phone', phone).maybeSingle()
+        data = res.data
+      }
+      // 전화번호 없으면 이름으로 검색
+      if (!data) {
+        const res = await supabase.from('members').select('*').eq('name', name).is('phone', null).maybeSingle()
+        data = res.data
+      }
+      // 그래도 없으면 생성
       if (!data) {
         const res = await supabase.from('members').insert({ name, phone }).select().single()
         if (res.error) { toast.error(`회원 생성 실패: ${name} (${res.error.message})`); setImporting(false); return }
