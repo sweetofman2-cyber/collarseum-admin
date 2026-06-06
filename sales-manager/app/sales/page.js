@@ -187,9 +187,15 @@ export default function SalesInput() {
       importRows.filter(r => !r.member && r.name).map(r => `${r.name}|${r.phone}`)
     )]
     for (const key of newMemberKeys) {
-      const [name, phone] = key.split('|')
-      // 이미 존재하면 기존 데이터 사용, 없으면 생성
-      let { data } = await supabase.from('members').select('*').eq('name', name).eq('phone', phone).single()
+      const [name, rawPhone] = key.split('|')
+      const phone = rawPhone || null
+
+      // 이름+전번으로 기존 회원 검색
+      let query = supabase.from('members').select('*').eq('name', name)
+      if (phone) query = query.eq('phone', phone)
+      else query = query.is('phone', null)
+      let { data } = await query.maybeSingle()
+
       if (!data) {
         const res = await supabase.from('members').insert({ name, phone }).select().single()
         if (res.error) { toast.error(`회원 생성 실패: ${name} (${res.error.message})`); setImporting(false); return }
