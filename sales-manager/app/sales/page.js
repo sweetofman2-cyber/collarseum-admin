@@ -45,6 +45,14 @@ function matchChannel(cellValue, channels) {
   return channels.find(c => c.name.includes(v) || v.includes(c.name.replace(/\s/g, ''))) || null
 }
 
+// "22년11월" → "2022-11"
+function parseSaleMonth(val) {
+  if (!val) return null
+  const m = String(val).match(/(\d{2})년\s*(\d{1,2})월/)
+  if (m) return `20${m[1]}-${m[2].padStart(2, '0')}`
+  return String(val).trim() || null
+}
+
 export default function SalesInput() {
   const [form, setForm] = useState(emptyForm)
   const [products, setProducts] = useState([])
@@ -136,10 +144,14 @@ export default function SalesInput() {
         const nameRaw = row['이름'] || row['name'] || ''
         const phoneRaw = row['전번'] || row['전화'] || row['phone'] || ''
         const channelRaw = row['채널'] || row['channel'] || ''
-        const bigoRaw = row['비고'] || row['note'] || ''
+        const productRaw = row['제품'] || row['비고'] || row['note'] || ''
+        const saleMonthRaw = row['판매월'] || ''
+        const note2Raw = row['비고2'] || ''
 
         const name = String(nameRaw).replace(/\s*님\s*$/, '').trim()
         const phone = String(phoneRaw).trim()
+        const saleMonth = parseSaleMonth(saleMonthRaw)
+        const note2 = String(note2Raw).trim() || null
 
         // 회원 매칭 (이름 or 전번)
         const member = members.find(m =>
@@ -149,13 +161,13 @@ export default function SalesInput() {
         )
 
         const channel = matchChannel(channelRaw, channels)
-        const items = parseBigo(bigoRaw, products)
+        const items = parseBigo(productRaw, products)
 
         if (items.length === 0) {
-          rows.push({ name, phone, channelRaw, bigoRaw, member, channel, items: [], error: '상품 파싱 실패' })
+          rows.push({ name, phone, channelRaw, productRaw, member, channel, items: [], error: '상품 파싱 실패', saleMonth, note2 })
         } else {
           for (const item of items) {
-            rows.push({ name, phone, channelRaw, bigoRaw, member, channel, product: item.product, qty: item.qty, error: null })
+            rows.push({ name, phone, channelRaw, productRaw, member, channel, product: item.product, qty: item.qty, error: null, saleMonth, note2 })
           }
         }
       }
@@ -192,11 +204,11 @@ export default function SalesInput() {
       channelMap[name] = data
     }
 
-    // 3. 미등록 상품 자동 생성 (파싱 실패한 비고 토큰 → 이름만, 가격 0원)
+    // 3. 미등록 상품 자동 생성 (파싱 실패한 제품 토큰 → 이름만, 가격 0원)
     const productMap = {}
     const newProductNames = [...new Set(
-      importRows.filter(r => r.error === '상품 파싱 실패' && r.bigoRaw)
-        .flatMap(r => String(r.bigoRaw).trim().split(/\s+/).map(t => {
+      importRows.filter(r => r.error === '상품 파싱 실패' && r.productRaw)
+        .flatMap(r => String(r.productRaw).trim().split(/\s+/).map(t => {
           const m = t.match(/^(.*?)(\d+)$/)
           return m ? m[1] : t
         }).filter(Boolean))
@@ -216,8 +228,8 @@ export default function SalesInput() {
       let qty = r.qty || 1
 
       // 파싱 실패한 경우 새로 만들어진 상품으로 처리
-      if (!product && r.error === '상품 파싱 실패' && r.bigoRaw) {
-        const tokens = String(r.bigoRaw).trim().split(/\s+/)
+      if (!product && r.error === '상품 파싱 실패' && r.productRaw) {
+        const tokens = String(r.productRaw).trim().split(/\s+/)
         for (const token of tokens) {
           const m = token.match(/^(.*?)(\d+)$/)
           const name = (m ? m[1] : token).toLowerCase()
@@ -230,7 +242,9 @@ export default function SalesInput() {
               channel_id: channel.id,
               quantity: q,
               total_price: 0,
-              note: r.bigoRaw || null,
+              sale_month: r.saleMonth || null,
+              note: r.productRaw || null,
+              note2: r.note2 || null,
             })
           }
         }
@@ -244,7 +258,9 @@ export default function SalesInput() {
         channel_id: channel.id,
         quantity: qty,
         total_price: product.price * qty,
-        note: r.bigoRaw || null,
+        sale_month: r.saleMonth || null,
+        note: r.productRaw || null,
+        note2: r.note2 || null,
       })
     }
 
@@ -293,6 +309,8 @@ export default function SalesInput() {
                     <th className="px-3 py-2 text-left">상품</th>
                     <th className="px-3 py-2 text-center">수량</th>
                     <th className="px-3 py-2 text-right">금액</th>
+                    <th className="px-3 py-2 text-center">판매월</th>
+                    <th className="px-3 py-2 text-left">비고2</th>
                     <th className="px-3 py-2 text-center">상태</th>
                   </tr>
                 </thead>
@@ -323,6 +341,8 @@ export default function SalesInput() {
                         <td className="px-3 py-2 text-right">
                           {productOk ? (r.product.price * r.qty).toLocaleString() + '원' : '-'}
                         </td>
+                        <td className="px-3 py-2 text-center text-gray-500">{r.saleMonth || '-'}</td>
+                        <td className="px-3 py-2 text-gray-500">{r.note2 || '-'}</td>
                         <td className="px-3 py-2 text-center">
                           {allOk
                             ? <span className="text-emerald-500 font-medium">OK</span>
