@@ -19,18 +19,21 @@ function parseBigo(bigo, products) {
   const tokens = String(bigo).trim().split(/\s+/)
 
   for (const token of tokens) {
-    let remaining = token.toLowerCase()
-    while (remaining.length > 0) {
-      const match = normalized.find(p => remaining.startsWith(p.key))
-      if (match) {
-        remaining = remaining.slice(match.key.length)
-        const qty = parseInt(remaining, 10) || 1
-        remaining = remaining.replace(/^\d+/, '')
-        results.push({ product: match, qty })
-      } else {
-        break
-      }
-    }
+    // 토큰 끝 숫자 분리: "타임1" → base="타임", qty=1
+    const numMatch = token.match(/^(.*?)(\d+)$/)
+    const base = (numMatch ? numMatch[1] : token).toLowerCase()
+    const qty = numMatch ? parseInt(numMatch[2]) : 1
+
+    if (!base) continue
+
+    // 1. 정확히 일치
+    let match = normalized.find(p => p.key === base)
+    // 2. 앞부분 일치 (예: "타임" → "타임실버")
+    if (!match) match = normalized.find(p => p.key.startsWith(base))
+    // 3. 포함 일치 (예: "레전드블랙" 오타 대비)
+    if (!match) match = normalized.find(p => p.key.includes(base))
+
+    if (match) results.push({ product: match, qty })
   }
   return results
 }
