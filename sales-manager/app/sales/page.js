@@ -298,32 +298,35 @@ export default function SalesInput() {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {importRows.map((r, i) => {
-                    const ok = r.member && r.channel && r.product && !r.error
+                    const memberOk = !!r.member
+                    const channelOk = !!r.channel
+                    const productOk = !!r.product
+                    const allOk = memberOk && channelOk && productOk
                     return (
-                      <tr key={i} className={ok ? '' : 'bg-red-50'}>
+                      <tr key={i} className={allOk ? '' : 'bg-amber-50'}>
                         <td className="px-3 py-2">
-                          {r.member
+                          {memberOk
                             ? <span className="text-gray-800">{r.member.name}</span>
-                            : <span className="text-red-500">{r.name} (미매칭)</span>}
+                            : <span className="text-amber-600">{r.name} <span className="text-xs">(신규 생성)</span></span>}
                         </td>
                         <td className="px-3 py-2">
-                          {r.channel
+                          {channelOk
                             ? <span className="text-gray-700">{r.channel.name}</span>
-                            : <span className="text-red-500">{r.channelRaw} (미매칭)</span>}
+                            : <span className="text-amber-600">{r.channelRaw} <span className="text-xs">(신규 생성)</span></span>}
                         </td>
                         <td className="px-3 py-2">
-                          {r.product
+                          {productOk
                             ? <span className="text-gray-700">{r.product.name}</span>
-                            : <span className="text-red-500">{r.bigoRaw} (파싱 실패)</span>}
+                            : <span className="text-amber-600">{r.bigoRaw} <span className="text-xs">(신규 생성, 가격 0원)</span></span>}
                         </td>
-                        <td className="px-3 py-2 text-center">{r.qty || '-'}</td>
+                        <td className="px-3 py-2 text-center">{r.qty || 1}</td>
                         <td className="px-3 py-2 text-right">
-                          {r.product ? (r.product.price * r.qty).toLocaleString() + '원' : '-'}
+                          {productOk ? (r.product.price * r.qty).toLocaleString() + '원' : '-'}
                         </td>
                         <td className="px-3 py-2 text-center">
-                          {ok
+                          {allOk
                             ? <span className="text-emerald-500 font-medium">OK</span>
-                            : <span className="text-red-400 font-medium">오류</span>}
+                            : <span className="text-amber-500 font-medium">자동생성</span>}
                         </td>
                       </tr>
                     )
@@ -333,9 +336,9 @@ export default function SalesInput() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-500">
-                총 {importRows.length}건 중 등록 가능: <strong className="text-emerald-600">{importRows.filter(r => r.member && r.channel && r.product && !r.error).length}건</strong>
+                총 <strong>{importRows.length}건</strong> 등록 예정
                 {importRows.some(r => !r.member || !r.channel || !r.product) && (
-                  <span className="text-red-400 ml-2">/ 오류: {importRows.filter(r => !r.member || !r.channel || !r.product || r.error).length}건</span>
+                  <span className="text-amber-500 ml-2">(일부 신규 생성 포함 — 상품 가격은 설정에서 수정 필요)</span>
                 )}
               </span>
               <div className="flex gap-2">
