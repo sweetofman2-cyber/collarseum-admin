@@ -8,6 +8,7 @@ export default function History() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [channelFilter, setChannelFilter] = useState('')
+  const [monthFilter, setMonthFilter] = useState('')
   const [channels, setChannels] = useState([])
 
   async function fetchSales() {
@@ -32,13 +33,16 @@ export default function History() {
     else { toast.success('삭제되었습니다.'); fetchSales() }
   }
 
+  const months = [...new Set(sales.map(s => s.sale_month).filter(Boolean))].sort()
+
   const filtered = sales.filter(s => {
     const matchSearch = !search ||
       s.members?.name?.includes(search) ||
       s.members?.phone?.includes(search) ||
       s.products?.name?.includes(search)
     const matchChannel = !channelFilter || s.channels?.name === channelFilter
-    return matchSearch && matchChannel
+    const matchMonth = !monthFilter || s.sale_month === monthFilter
+    return matchSearch && matchChannel && matchMonth
   })
 
   const totalRevenue = filtered.reduce((sum, s) => sum + (s.total_price || 0), 0)
@@ -63,6 +67,14 @@ export default function History() {
           <option value="">전체 채널</option>
           {channels.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
         </select>
+        <select
+          className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          value={monthFilter}
+          onChange={e => setMonthFilter(e.target.value)}
+        >
+          <option value="">전체 판매월</option>
+          {months.map(m => <option key={m} value={m}>{m}</option>)}
+        </select>
         <span className="text-sm text-gray-500">{filtered.length}건</span>
         <span className="ml-auto text-sm font-medium text-indigo-700">합계: {totalRevenue.toLocaleString()}원</span>
       </div>
@@ -80,6 +92,7 @@ export default function History() {
                 <th className="px-4 py-3">채널</th>
                 <th className="px-4 py-3 text-center">수량</th>
                 <th className="px-4 py-3 text-right">금액</th>
+                <th className="px-4 py-3">판매월</th>
                 <th className="px-4 py-3">메모</th>
                 <th className="px-4 py-3">판매일</th>
                 <th className="px-4 py-3">삭제</th>
@@ -87,7 +100,7 @@ export default function History() {
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-400">내역이 없습니다.</td></tr>
+                <tr><td colSpan={10} className="px-4 py-8 text-center text-gray-400">내역이 없습니다.</td></tr>
               ) : filtered.map(s => (
                 <tr key={s.id} className="border-t hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium">{s.members?.name}</td>
@@ -98,6 +111,11 @@ export default function History() {
                   </td>
                   <td className="px-4 py-3 text-center">{s.quantity}</td>
                   <td className="px-4 py-3 text-right font-medium text-indigo-700">{s.total_price?.toLocaleString()}원</td>
+                  <td className="px-4 py-3 text-xs">
+                    {s.sale_month
+                      ? <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">{s.sale_month}</span>
+                      : <span className="text-gray-300">-</span>}
+                  </td>
                   <td className="px-4 py-3 text-gray-400 text-xs max-w-xs truncate">{s.note || '-'}</td>
                   <td className="px-4 py-3 text-gray-400 text-xs">{s.sold_at?.slice(0, 16).replace('T', ' ')}</td>
                   <td className="px-4 py-3">
