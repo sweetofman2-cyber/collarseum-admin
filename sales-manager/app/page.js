@@ -9,20 +9,32 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function load() {
-      const [{ count: memberCount }, { data: salesData }] = await Promise.all([
+      const now = new Date()
+      const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000)
+      const today = kstNow.toISOString().slice(0, 10)
+      const todayStartUTC = new Date(today + 'T00:00:00+09:00').toISOString()
+      const todayEndUTC = new Date(today + 'T23:59:59+09:00').toISOString()
+
+      const [
+        { count: memberCount },
+        { count: salesCount },
+        { data: revenueData },
+        { data: todayData },
+      ] = await Promise.all([
         supabase.from('members').select('*', { count: 'exact', head: true }),
-        supabase.from('sales').select('total_price, sold_at').order('sold_at', { ascending: false }).limit(100),
+        supabase.from('sales').select('*', { count: 'exact', head: true }),
+        supabase.from('sales').select('total_price').limit(10000),
+        supabase.from('sales').select('total_price').gte('sold_at', todayStartUTC).lte('sold_at', todayEndUTC),
       ])
 
-      const today = new Date().toISOString().slice(0, 10)
-      const todaySales = salesData?.filter(s => s.sold_at?.slice(0, 10) === today) || []
-      const revenue = salesData?.reduce((sum, s) => sum + (s.total_price || 0), 0) || 0
+      const revenue = revenueData?.reduce((sum, s) => sum + (s.total_price || 0), 0) || 0
+      const todayRevenue = todayData?.reduce((sum, s) => sum + (s.total_price || 0), 0) || 0
 
       setStats({
         members: memberCount || 0,
-        sales: salesData?.length || 0,
+        sales: salesCount || 0,
         revenue,
-        today: todaySales.reduce((sum, s) => sum + (s.total_price || 0), 0),
+        today: todayRevenue,
       })
 
       const { data: recentSales } = await supabase
