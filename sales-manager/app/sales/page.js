@@ -167,11 +167,24 @@ export default function SalesInput() {
 
   // 일괄 등록
   async function handleImport() {
-    const valid = importRows.filter(r => r.member && r.channel && r.product && !r.error)
+    const valid = importRows.filter(r => r.channel && r.product && !r.error)
     if (!valid.length) return toast.error('등록 가능한 행이 없습니다.')
     setImporting(true)
+
+    // 미등록 회원 자동 생성 (이름+전번 기준 중복 방지)
+    const memberMap = {} // "이름|전번" → member id
+    const newMemberKeys = [...new Set(
+      valid.filter(r => !r.member).map(r => `${r.name}|${r.phone}`)
+    )]
+    for (const key of newMemberKeys) {
+      const [name, phone] = key.split('|')
+      const { data, error } = await supabase.from('members').insert({ name, phone }).select().single()
+      if (error) { toast.error(`회원 생성 실패: ${name}`); setImporting(false); return }
+      memberMap[key] = data.id
+    }
+
     const inserts = valid.map(r => ({
-      member_id: r.member.id,
+      member_id: r.member ? r.member.id : memberMap[`${r.name}|${r.phone}`],
       product_id: r.product.id,
       channel_id: r.channel.id,
       quantity: r.qty,
@@ -181,7 +194,8 @@ export default function SalesInput() {
     const { error } = await supabase.from('sales').insert(inserts)
     setImporting(false)
     if (error) { toast.error('일괄 등록 실패: ' + error.message); return }
-    toast.success(`${valid.length}건 등록 완료!`)
+    const newCount = newMemberKeys.length
+    toast.success(`${valid.length}건 등록 완료!${newCount ? ` (신규 회원 ${newCount}명 자동 생성)` : ''}`)
     setImportRows(null)
   }
 
