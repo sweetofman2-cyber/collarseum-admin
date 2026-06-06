@@ -10,6 +10,8 @@ export default function History() {
   const [channelFilter, setChannelFilter] = useState('')
   const [monthFilter, setMonthFilter] = useState('')
   const [channels, setChannels] = useState([])
+  const [pageSize, setPageSize] = useState(50)
+  const [page, setPage] = useState(1)
 
   async function fetchSales() {
     setLoading(true)
@@ -46,6 +48,8 @@ export default function History() {
   })
 
   const totalRevenue = filtered.reduce((sum, s) => sum + (s.total_price || 0), 0)
+  const paged = pageSize === 0 ? filtered : filtered.slice((page - 1) * pageSize, page * pageSize)
+  const totalPages = pageSize === 0 ? 1 : Math.ceil(filtered.length / pageSize)
 
   return (
     <div>
@@ -76,6 +80,14 @@ export default function History() {
           {months.map(m => <option key={m} value={m}>{m}</option>)}
         </select>
         <span className="text-sm text-gray-500">{filtered.length}건</span>
+        <select
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          value={pageSize}
+          onChange={e => { setPageSize(Number(e.target.value)); setPage(1) }}
+        >
+          {[10, 50, 100, 200].map(n => <option key={n} value={n}>{n}개씩 보기</option>)}
+          <option value={0}>전체 보기</option>
+        </select>
         <span className="ml-auto text-sm font-medium text-indigo-700">합계: {totalRevenue.toLocaleString()}원</span>
       </div>
 
@@ -101,7 +113,7 @@ export default function History() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr><td colSpan={10} className="px-4 py-8 text-center text-gray-400">내역이 없습니다.</td></tr>
-              ) : filtered.map(s => (
+              ) : paged.map(s => (
                 <tr key={s.id} className="border-t hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium">{s.members?.name}</td>
                   <td className="px-4 py-3 text-gray-500">{s.members?.phone}</td>
@@ -127,6 +139,22 @@ export default function History() {
           </table>
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-1 mt-4">
+          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+            className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 disabled:opacity-40 hover:bg-gray-50">이전</button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2).map((p, i, arr) => (
+            <span key={p}>
+              {i > 0 && arr[i - 1] !== p - 1 && <span className="px-2 py-1.5 text-gray-400">…</span>}
+              <button onClick={() => setPage(p)}
+                className={`px-3 py-1.5 text-sm rounded-lg border ${p === page ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 hover:bg-gray-50'}`}>{p}</button>
+            </span>
+          ))}
+          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+            className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 disabled:opacity-40 hover:bg-gray-50">다음</button>
+        </div>
+      )}
     </div>
   )
 }
