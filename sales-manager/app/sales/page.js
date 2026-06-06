@@ -167,35 +167,98 @@ export default function SalesInput() {
 
   // 일괄 등록
   async function handleImport() {
-    const valid = importRows.filter(r => r.channel && r.product && !r.error)
-    if (!valid.length) return toast.error('등록 가능한 행이 없습니다.')
     setImporting(true)
 
-    // 미등록 회원 자동 생성 (이름+전번 기준 중복 방지)
-    const memberMap = {} // "이름|전번" → member id
+    // 1. 미등록 회원 자동 생성
+    const memberMap = {}
     const newMemberKeys = [...new Set(
-      valid.filter(r => !r.member).map(r => `${r.name}|${r.phone}`)
+      importRows.filter(r => !r.member && r.name).map(r => `${r.name}|${r.phone}`)
     )]
     for (const key of newMemberKeys) {
       const [name, phone] = key.split('|')
       const { data, error } = await supabase.from('members').insert({ name, phone }).select().single()
       if (error) { toast.error(`회원 생성 실패: ${name}`); setImporting(false); return }
-      memberMap[key] = data.id
+      memberMap[key] = data
     }
 
-    const inserts = valid.map(r => ({
-      member_id: r.member ? r.member.id : memberMap[`${r.name}|${r.phone}`],
-      product_id: r.product.id,
-      channel_id: r.channel.id,
-      quantity: r.qty,
-      total_price: r.product.price * r.qty,
-      note: r.bigoRaw || null,
-    }))
+    // 2. 미등록 채널 자동 생성
+    const channelMap = {}
+    const newChannelNames = [...new Set(
+      importRows.filter(r => !r.channel && r.channelRaw).map(r => r.channelRaw)
+    )]
+    for (const name of newChannelNames) {
+      const { data, error } = await supabase.from('channels').insert({ name }).select().single()
+      if (error) { toast.error(`채널 생성 실패: ${name}`); setImporting(false); return }
+      channelMap[name] = data
+    }
+
+    // 3. 미등록 상품 자동 생성 (파싱 실패한 비고 토큰 → 이름만, 가격 0원)
+    const productMap = {}
+    const newProductNames = [...new Set(
+      importRows.filter(r => r.error === '상품 파싱 실패' && r.bigoRaw)
+        .flatMap(r => String(r.bigoRaw).trim().split(/\s+/).map(t => {
+          const m = t.match(/^(.*?)(\d+)$/)
+          return m ? m[1] : t
+        }).filter(Boolean))
+    )]
+    for (const name of newProductNames) {
+      const { data, error } = await supabase.from('products').insert({ name, price: 0 }).select().single()
+      if (error) { toast.error(`상품 생성 실패: ${name}`); setImporting(false); return }
+      productMap[name.toLowerCase()] = data
+    }
+
+    // 4. 판매 데이터 구성
+    const inserts = []
+    for (const r of importRows) {
+      const member = r.member || memberMap[`${r.name}|${r.phone}`]
+      const channel = r.channel || channelMap[r.channelRaw]
+      let product = r.product
+      let qty = r.qty || 1
+
+      // 파싱 실패한 경우 새로 만들어진 상품으로 처리
+      if (!product && r.error === '상품 파싱 실패' && r.bigoRaw) {
+        const tokens = String(r.bigoRaw).trim().split(/\s+/)
+        for (const token of tokens) {
+          const m = token.match(/^(.*?)(\d+)$/)
+          const name = (m ? m[1] : token).toLowerCase()
+          const q = m ? parseInt(m[2]) : 1
+          const newProd = productMap[name]
+          if (newProd && member && channel) {
+            inserts.push({
+              member_id: member.id,
+              product_id: newProd.id,
+              channel_id: channel.id,
+              quantity: q,
+              total_price: 0,
+              note: r.bigoRaw || null,
+            })
+          }
+        }
+        continue
+      }
+
+      if (!member || !channel || !product) continue
+      inserts.push({
+        member_id: member.id,
+        product_id: product.id,
+        channel_id: channel.id,
+        quantity: qty,
+        total_price: product.price * qty,
+        note: r.bigoRaw || null,
+      })
+    }
+
+    if (!inserts.length) { toast.error('등록 가능한 행이 없습니다.'); setImporting(false); return }
+
     const { error } = await supabase.from('sales').insert(inserts)
     setImporting(false)
     if (error) { toast.error('일괄 등록 실패: ' + error.message); return }
-    const newCount = newMemberKeys.length
-    toast.success(`${valid.length}건 등록 완료!${newCount ? ` (신규 회원 ${newCount}명 자동 생성)` : ''}`)
+
+    const msgs = [`${inserts.length}건 등록 완료!`]
+    if (newMemberKeys.length) msgs.push(`신규 회원 ${newMemberKeys.length}명`)
+    if (newChannelNames.length) msgs.push(`신규 채널 ${newChannelNames.length}개`)
+    if (newProductNames.length) msgs.push(`신규 상품 ${newProductNames.length}개 (가격 0원, 설정에서 수정 필요)`)
+    toast.success(msgs.join(' / '))
     setImportRows(null)
   }
 
