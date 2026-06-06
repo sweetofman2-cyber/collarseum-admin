@@ -316,7 +316,10 @@ function ProductManager() {
                 <span className="font-medium">{item.name}</span>
                 <span className="text-gray-400 ml-2">{item.price?.toLocaleString()}원</span>
                 {supplyTotals[item.id] > 0 && (
-                  <span className="text-xs text-indigo-500 ml-1">(공급 {supplyTotals[item.id].toLocaleString()}원)</span>
+                  <>
+                    <span className="text-xs text-indigo-500 ml-1">공급 {supplyTotals[item.id].toLocaleString()}원</span>
+                    <span className="text-xs text-emerald-500 ml-1">마진 {(item.price - supplyTotals[item.id]).toLocaleString()}원</span>
+                  </>
                 )}
               </button>
               <div className="flex gap-3">
