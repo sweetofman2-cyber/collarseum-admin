@@ -86,7 +86,7 @@ function CommonSupplyManager() {
 }
 
 // 공급 원가 필드 관리 (상품별 확장 패널)
-function SupplyFieldsPanel({ product }) {
+function SupplyFieldsPanel({ product, onChanged }) {
   const [fields, setFields] = useState([])
   const [form, setForm] = useState({ field_name: '', amount: '' })
   const [editId, setEditId] = useState(null)
@@ -121,7 +121,7 @@ function SupplyFieldsPanel({ product }) {
     const inserts = toAdd.map(f => ({ product_id: product.id, field_name: f.field_name, amount: f.amount }))
     const { error } = await supabase.from('supply_fields').insert(inserts)
     if (error) toast.error('추가 실패')
-    else { toast.success(`${toAdd.length}개 추가됨`); setSelectedCommon([]); fetchFields() }
+    else { toast.success(`${toAdd.length}개 추가됨`); setSelectedCommon([]); fetchFields(); onChanged?.() }
   }
 
   async function handleSubmit(e) {
@@ -142,14 +142,14 @@ function SupplyFieldsPanel({ product }) {
       else toast.success('필드 추가됨')
     }
     setForm({ field_name: '', amount: '' })
-    fetchFields()
+    fetchFields(); onChanged?.()
   }
 
   async function handleDelete(id) {
     if (!confirm('삭제할까요?')) return
     await supabase.from('supply_fields').delete().eq('id', id)
     toast.success('삭제됨')
-    fetchFields()
+    fetchFields(); onChanged?.()
   }
 
   return (
@@ -238,12 +238,22 @@ function ProductManager() {
   const [form, setForm] = useState({ name: '', price: '' })
   const [editId, setEditId] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
+  const [supplyTotals, setSupplyTotals] = useState({})
 
   async function fetchProducts() {
     const { data } = await supabase.from('products').select('*').order('id')
     setProducts(data || [])
   }
-  useEffect(() => { fetchProducts() }, [])
+
+  async function fetchSupplyTotals() {
+    const { data } = await supabase.from('supply_fields').select('product_id, amount')
+    if (!data) return
+    const totals = {}
+    data.forEach(f => { totals[f.product_id] = (totals[f.product_id] || 0) + (f.amount || 0) })
+    setSupplyTotals(totals)
+  }
+
+  useEffect(() => { fetchProducts(); fetchSupplyTotals() }, [])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -305,6 +315,9 @@ function ProductManager() {
                 <span className={`text-xs transition-transform ${expandedId === item.id ? 'rotate-90' : ''}`}>▶</span>
                 <span className="font-medium">{item.name}</span>
                 <span className="text-gray-400 ml-2">{item.price?.toLocaleString()}원</span>
+                {supplyTotals[item.id] > 0 && (
+                  <span className="text-xs text-indigo-500 ml-1">(공급 {supplyTotals[item.id].toLocaleString()}원)</span>
+                )}
               </button>
               <div className="flex gap-3">
                 <button onClick={() => { setEditId(item.id); setForm({ name: item.name, price: item.price || '' }) }}
@@ -312,7 +325,7 @@ function ProductManager() {
                 <button onClick={() => handleDelete(item.id)} className="text-red-400 hover:underline text-xs">삭제</button>
               </div>
             </div>
-            {expandedId === item.id && <SupplyFieldsPanel product={item} />}
+            {expandedId === item.id && <SupplyFieldsPanel product={item} onChanged={fetchSupplyTotals} />}
           </li>
         ))}
       </ul>
