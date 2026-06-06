@@ -13,7 +13,7 @@ export default function Members() {
   async function fetchMembers() {
     const { data } = await supabase
       .from('members')
-      .select('*, sales(count)')
+      .select('*, sales(count, sale_month)')
       .order('created_at', { ascending: false })
     setMembers(data || [])
   }
@@ -115,6 +115,7 @@ export default function Members() {
               <th className="px-4 py-3">이름</th>
               <th className="px-4 py-3">휴대폰</th>
               <th className="px-4 py-3">구매 횟수</th>
+              <th className="px-4 py-3">판매월</th>
               <th className="px-4 py-3">등록일</th>
               <th className="px-4 py-3">관리</th>
             </tr>
@@ -122,7 +123,11 @@ export default function Members() {
           <tbody>
             {filtered.length === 0 ? (
               <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400">회원이 없습니다.</td></tr>
-            ) : filtered.map(m => (
+            ) : filtered.map(m => {
+              const months = [...new Set(
+                (m.sales || []).map(s => s.sale_month).filter(Boolean)
+              )].sort()
+              return (
               <tr key={m.id} className="border-t hover:bg-gray-50">
                 <td className="px-4 py-3 font-medium">{m.name}</td>
                 <td className="px-4 py-3 text-gray-600">{m.phone}</td>
@@ -131,13 +136,24 @@ export default function Members() {
                     {m.sales?.[0]?.count ?? 0}회
                   </span>
                 </td>
+                <td className="px-4 py-3">
+                  {months.length === 0
+                    ? <span className="text-gray-300">-</span>
+                    : <div className="flex flex-wrap gap-1">
+                        {months.map(mo => (
+                          <span key={mo} className="bg-emerald-50 text-emerald-700 text-xs px-2 py-0.5 rounded-full">{mo}</span>
+                        ))}
+                      </div>
+                  }
+                </td>
                 <td className="px-4 py-3 text-gray-400">{m.created_at?.slice(0, 10)}</td>
                 <td className="px-4 py-3 flex gap-2">
                   <button onClick={() => startEdit(m)} className="text-indigo-500 hover:underline text-xs">수정</button>
                   <button onClick={() => handleDelete(m.id)} className="text-red-400 hover:underline text-xs">삭제</button>
                 </td>
               </tr>
-            ))}
+              )
+            })}
           </tbody>
         </table>
       </div>
