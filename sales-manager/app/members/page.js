@@ -13,7 +13,7 @@ export default function Members() {
   async function fetchMembers() {
     const { data } = await supabase
       .from('members')
-      .select('*, sales(count, sale_month)')
+      .select('*, sales(id, sale_month)')
       .order('created_at', { ascending: false })
     setMembers(data || [])
   }
@@ -133,7 +133,7 @@ export default function Members() {
                 <td className="px-4 py-3 text-gray-600">{m.phone}</td>
                 <td className="px-4 py-3 text-center">
                   <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs">
-                    {m.sales?.[0]?.count ?? 0}회
+                    {m.sales?.length ?? 0}회
                   </span>
                 </td>
                 <td className="px-4 py-3">
