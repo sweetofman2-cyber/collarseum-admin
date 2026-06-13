@@ -299,7 +299,7 @@ export default function OrderUploadPage() {
       item_qty: r.item_qty || 1,
       delivery_msg: r.delivery_msg || null,
       total_price: Math.round(r.total_price || 0),
-      note: r.note || null,
+      note: r.item_detail || r.note || null,
       quantity: r.item_qty || 1,
       sale_month: r.ordered_at
         ? String(r.ordered_at.getFullYear()).slice(2) + String(r.ordered_at.getMonth() + 1).padStart(2, '0')
