@@ -347,6 +347,7 @@ export default function OrderUploadPage() {
   function downloadShippingTable() {
     const rows = filtered.map(o => {
       const receiverAddrFull = [o.receiver_address, o.receiver_address_detail].filter(Boolean).join(' ')
+      const receiverAddrWithZip = [o.receiver_zip, receiverAddrFull].filter(Boolean).join(' ')
       const receiverAddrSplit = splitAddress(receiverAddrFull)
       const buyerAddrSplit = splitAddress(o.buyer_address || '')
       return {
@@ -358,7 +359,7 @@ export default function OrderUploadPage() {
         받는분성명: o.receiver_name || '',
         받는분전화번호: o.receiver_phone || '',
         받는분기타연락처: o.receiver_phone2 || '',
-        '받는분주소(전체)': receiverAddrFull,
+        '받는분주소(전체)': receiverAddrWithZip,
         '받는분주소(분할주소1)': receiverAddrSplit.main,
         '받는분주소(분할주소2)': receiverAddrSplit.detail,
         품목명: o.item_name || '',
@@ -610,6 +611,7 @@ export default function OrderUploadPage() {
                 <tr><td colSpan={15} className="text-center py-8 text-gray-300">데이터가 없습니다</td></tr>
               ) : filtered.map(o => {
                 const receiverAddrFull = [o.receiver_address, o.receiver_address_detail].filter(Boolean).join(' ')
+                const receiverAddrWithZip = [o.receiver_zip, receiverAddrFull].filter(Boolean).join(' ')
                 const receiverAddrSplit = splitAddress(receiverAddrFull)
                 const buyerAddrSplit = splitAddress(o.buyer_address || '')
                 return (
@@ -622,7 +624,7 @@ export default function OrderUploadPage() {
                     <td className="px-2 py-2 font-medium">{o.receiver_name || '-'}</td>
                     <td className="px-2 py-2">{o.receiver_phone || '-'}</td>
                     <td className="px-2 py-2">{o.receiver_phone2 || '-'}</td>
-                    <td className="px-2 py-2 max-w-[160px] truncate text-gray-500">{receiverAddrFull || '-'}</td>
+                    <td className="px-2 py-2 max-w-[160px] truncate text-gray-500">{receiverAddrWithZip || '-'}</td>
                     <td className="px-2 py-2 max-w-[140px] truncate text-gray-500">{receiverAddrSplit.main || '-'}</td>
                     <td className="px-2 py-2 max-w-[100px] truncate text-gray-500">{receiverAddrSplit.detail || '-'}</td>
                     <td className="px-2 py-2">{o.item_name || '-'}</td>
