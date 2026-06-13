@@ -313,7 +313,13 @@ export default function SalesInput() {
         <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="text-base font-semibold text-gray-700">엑셀 일괄 입력</h2>
-            <p className="text-xs text-gray-400 mt-0.5">이름, 전번, 채널, 비고 열이 있는 엑셀 파일을 올려주세요.</p>
+            <p className="text-xs text-gray-400 mt-0.5">이름, 전번, 채널, 비고 열이 있는 엑셀 파일을 올려주세요.
+              <a
+                href="/판매내역_예시.xlsx"
+                download
+                className="ml-2 text-indigo-500 hover:text-indigo-700 underline"
+              >예시 파일 다운로드</a>
+            </p>
           </div>
           <button
             onClick={() => fileRef.current?.click()}
