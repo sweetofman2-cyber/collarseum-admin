@@ -408,9 +408,7 @@ export default function OrderUploadPage() {
         받는분성명: o.receiver_name || '',
         받는분전화번호: o.receiver_phone || '',
         받는분기타연락처: o.receiver_phone2 || '',
-        '받는분주소(전체)': receiverAddrWithZip,
-        '받는분주소(분할주소1)': receiverAddrSplit.main,
-        '받는분주소(분할주소2)': receiverAddrSplit.detail,
+        '받는분주소(전체, 분할)': receiverAddrWithZip,
         품목명: o.item_name || '',
         내품명: o.item_detail || '',
         내품수량: o.item_qty || 1,
@@ -680,9 +678,7 @@ export default function OrderUploadPage() {
                 <th className="px-2 py-2 text-left whitespace-nowrap">받는분성명</th>
                 <th className="px-2 py-2 text-left whitespace-nowrap">받는분전화번호</th>
                 <th className="px-2 py-2 text-left whitespace-nowrap">받는분기타연락처</th>
-                <th className="px-2 py-2 text-left whitespace-nowrap">받는분주소(전체)</th>
-                <th className="px-2 py-2 text-left whitespace-nowrap">받는분주소(분할주소1)</th>
-                <th className="px-2 py-2 text-left whitespace-nowrap">받는분주소(분할주소2)</th>
+                <th className="px-2 py-2 text-left whitespace-nowrap">받는분주소(전체, 분할)</th>
                 <th className="px-2 py-2 text-left whitespace-nowrap">품목명</th>
                 <th className="px-2 py-2 text-left whitespace-nowrap">내품명</th>
                 <th className="px-2 py-2 text-center whitespace-nowrap">내품수량</th>
@@ -709,9 +705,7 @@ export default function OrderUploadPage() {
                     <td className="px-2 py-2 font-medium">{o.receiver_name || '-'}</td>
                     <td className="px-2 py-2">{o.receiver_phone || '-'}</td>
                     <td className="px-2 py-2">{o.receiver_phone2 || '-'}</td>
-                    <td className="px-2 py-2 max-w-[160px] truncate text-gray-500">{receiverAddrWithZip || '-'}</td>
-                    <td className="px-2 py-2 max-w-[140px] truncate text-gray-500">{receiverAddrSplit.main || '-'}</td>
-                    <td className="px-2 py-2 max-w-[100px] truncate text-gray-500">{receiverAddrSplit.detail || '-'}</td>
+                    <td className="px-2 py-2 max-w-[200px] truncate text-gray-500">{receiverAddrWithZip || '-'}</td>
                     <td className="px-2 py-2">{o.item_name || '-'}</td>
                     <td className="px-2 py-2 max-w-[180px] truncate">{o.item_detail || '-'}</td>
                     <td className="px-2 py-2 text-center">{o.item_qty || 1}</td>
