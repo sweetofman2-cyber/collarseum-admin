@@ -401,12 +401,9 @@ export default function OrderUploadPage() {
       const receiverAddrFull = [o.receiver_address, o.receiver_address_detail].filter(Boolean).join(' ')
       const receiverAddrWithZip = [o.receiver_zip, receiverAddrFull].filter(Boolean).join(' ')
       const receiverAddrSplit = splitAddress(receiverAddrFull)
-      const buyerAddrSplit = splitAddress(o.buyer_address || '')
       return {
         보내는분성명: o.buyer_name || '',
-        '보내는분주소(전체)': o.buyer_address || '',
-        '보내는분주소(분할주소1)': buyerAddrSplit.main,
-        '보내는분주소(분할주소2)': buyerAddrSplit.detail,
+        '보내는분주소(전체, 분할)': o.buyer_address || '',
         보내는분전화번호: o.buyer_phone || '',
         받는분성명: o.receiver_name || '',
         받는분전화번호: o.receiver_phone || '',
@@ -678,9 +675,7 @@ export default function OrderUploadPage() {
                   <input type="checkbox" checked={allPageChecked} onChange={toggleAll} className="cursor-pointer" />
                 </th>
                 <th className="px-2 py-2 text-left whitespace-nowrap">보내는분성명</th>
-                <th className="px-2 py-2 text-left whitespace-nowrap">보내는분주소(전체)</th>
-                <th className="px-2 py-2 text-left whitespace-nowrap">보내는분주소(분할주소1)</th>
-                <th className="px-2 py-2 text-left whitespace-nowrap">보내는분주소(분할주소2)</th>
+                <th className="px-2 py-2 text-left whitespace-nowrap">보내는분주소(전체, 분할)</th>
                 <th className="px-2 py-2 text-left whitespace-nowrap">보내는분전화번호</th>
                 <th className="px-2 py-2 text-left whitespace-nowrap">받는분성명</th>
                 <th className="px-2 py-2 text-left whitespace-nowrap">받는분전화번호</th>
@@ -703,16 +698,13 @@ export default function OrderUploadPage() {
                 const receiverAddrFull = [o.receiver_address, o.receiver_address_detail].filter(Boolean).join(' ')
                 const receiverAddrWithZip = [o.receiver_zip, receiverAddrFull].filter(Boolean).join(' ')
                 const receiverAddrSplit = splitAddress(receiverAddrFull)
-                const buyerAddrSplit = splitAddress(o.buyer_address || '')
                 return (
                   <tr key={o.id + '_ship'} className={`hover:bg-gray-50 ${checkedIds.has(o.id) ? 'bg-indigo-50' : ''}`}>
                     <td className="px-2 py-2 text-center">
                       <input type="checkbox" checked={checkedIds.has(o.id)} onChange={() => toggleOne(o.id)} className="cursor-pointer" />
                     </td>
                     <td className="px-2 py-2">{o.buyer_name || '-'}</td>
-                    <td className="px-2 py-2 max-w-[140px] truncate text-gray-500">{o.buyer_address || '-'}</td>
-                    <td className="px-2 py-2 max-w-[140px] truncate text-gray-500">{buyerAddrSplit.main || '-'}</td>
-                    <td className="px-2 py-2 max-w-[100px] truncate text-gray-500">{buyerAddrSplit.detail || '-'}</td>
+                    <td className="px-2 py-2 max-w-[160px] truncate text-gray-500">{o.buyer_address || '-'}</td>
                     <td className="px-2 py-2">{o.buyer_phone || '-'}</td>
                     <td className="px-2 py-2 font-medium">{o.receiver_name || '-'}</td>
                     <td className="px-2 py-2">{o.receiver_phone || '-'}</td>
