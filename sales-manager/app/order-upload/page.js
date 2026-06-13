@@ -247,8 +247,42 @@ export default function OrderUploadPage() {
     if (!cid) { toast.error(`채널 "${channel}"을 DB에서 찾을 수 없습니다. 마이그레이션을 실행하세요.`); return }
 
     setSaving(true)
+
+    // 1. 전화번호 기준으로 회원 일괄 조회/생성
+    const phoneToMemberId = {}
+    const uniquePhones = [...new Set(preview.map(r => r.receiver_phone).filter(Boolean))]
+
+    for (const phone of uniquePhones) {
+      // 기존 회원 조회
+      const { data: existing } = await supabase
+        .from('members')
+        .select('id')
+        .eq('phone', phone)
+        .maybeSingle()
+
+      if (existing) {
+        phoneToMemberId[phone] = existing.id
+      } else {
+        // 해당 전화번호의 이름 가져오기
+        const row = preview.find(r => r.receiver_phone === phone)
+        const { data: created, error: createErr } = await supabase
+          .from('members')
+          .insert({ name: row.receiver_name || '이름없음', phone })
+          .select('id')
+          .single()
+        if (createErr) {
+          toast.error(`회원 생성 실패 (${phone}): ${createErr.message}`)
+          setSaving(false)
+          return
+        }
+        phoneToMemberId[phone] = created.id
+      }
+    }
+
+    // 2. 판매 데이터 저장
     const inserts = preview.map(r => ({
       channel_id: cid,
+      member_id: r.receiver_phone ? (phoneToMemberId[r.receiver_phone] || null) : null,
       order_number: r.order_number || null,
       ordered_at: r.ordered_at ? r.ordered_at.toISOString() : null,
       buyer_name: r.buyer_name || null,
@@ -272,7 +306,9 @@ export default function OrderUploadPage() {
     const { error } = await supabase.from('sales').insert(inserts)
     setSaving(false)
     if (error) { toast.error('저장 실패: ' + error.message); return }
-    toast.success(`${inserts.length}건 저장 완료!`)
+
+    const newMemberCount = Object.keys(phoneToMemberId).length
+    toast.success(`${inserts.length}건 저장 완료! (회원 매칭/등록 ${newMemberCount}명)`)
     setPreview(null)
     loadOrders()
   }
