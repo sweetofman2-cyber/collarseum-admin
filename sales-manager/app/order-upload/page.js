@@ -198,6 +198,13 @@ export default function OrderUploadPage() {
   const [dateTo, setDateTo] = useState('')
   const [filterChannel, setFilterChannel] = useState('')
 
+  // 페이징
+  const [pageSize, setPageSize] = useState(50)
+  const [page, setPage] = useState(1)
+
+  // 체크박스
+  const [checkedIds, setCheckedIds] = useState(new Set())
+
   // 채널 id 맵
   const [channelMap, setChannelMap] = useState({})
 
@@ -347,9 +354,35 @@ export default function OrderUploadPage() {
     )
   })
 
+  const totalPages = pageSize === 0 ? 1 : Math.ceil(filtered.length / pageSize)
+  const paged = pageSize === 0 ? filtered : filtered.slice((page - 1) * pageSize, page * pageSize)
+
+  // 체크박스 헬퍼
+  const allPageChecked = paged.length > 0 && paged.every(o => checkedIds.has(o.id))
+  function toggleAll() {
+    setCheckedIds(prev => {
+      const next = new Set(prev)
+      if (allPageChecked) paged.forEach(o => next.delete(o.id))
+      else paged.forEach(o => next.add(o.id))
+      return next
+    })
+  }
+  function toggleOne(id) {
+    setCheckedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  // 다운로드 대상: 체크된 것 우선, 없으면 현재 페이지
+  const downloadTarget = checkedIds.size > 0
+    ? filtered.filter(o => checkedIds.has(o.id))
+    : paged
+
   // 상단 테이블 엑셀 다운로드
   function downloadOrderTable() {
-    const rows = filtered.map((o, i) => ({
+    const rows = downloadTarget.map((o, i) => ({
       번호: i + 1,
       이름: o.receiver_name || '',
       휴대폰번호: o.receiver_phone || '',
@@ -364,7 +397,7 @@ export default function OrderUploadPage() {
 
   // 하단 테이블 엑셀 다운로드
   function downloadShippingTable() {
-    const rows = filtered.map(o => {
+    const rows = downloadTarget.map(o => {
       const receiverAddrFull = [o.receiver_address, o.receiver_address_detail].filter(Boolean).join(' ')
       const receiverAddrWithZip = [o.receiver_zip, receiverAddrFull].filter(Boolean).join(' ')
       const receiverAddrSplit = splitAddress(receiverAddrFull)
@@ -534,23 +567,37 @@ export default function OrderUploadPage() {
 
       {/* ─── 상단 테이블: 주문 목록 ─── */}
       <div className="bg-white rounded-xl shadow p-5 mb-6">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <h2 className="text-base font-semibold text-gray-700">
             주문 목록
             <span className="ml-2 text-sm font-normal text-gray-400">{filtered.length}건</span>
+            {checkedIds.size > 0 && <span className="ml-2 text-sm font-normal text-indigo-500">{checkedIds.size}개 선택</span>}
           </h2>
-          <button
-            onClick={downloadOrderTable}
-            disabled={!filtered.length}
-            className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-emerald-700 disabled:opacity-40 transition"
-          >
-            엑셀 다운로드
-          </button>
+          <div className="flex items-center gap-2">
+            <select
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              value={pageSize}
+              onChange={e => { setPageSize(Number(e.target.value)); setPage(1); setCheckedIds(new Set()) }}
+            >
+              {[10, 50, 100, 200].map(n => <option key={n} value={n}>{n}개씩 보기</option>)}
+              <option value={0}>전체 보기</option>
+            </select>
+            <button
+              onClick={downloadOrderTable}
+              disabled={!filtered.length}
+              className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-emerald-700 disabled:opacity-40 transition"
+            >
+              {checkedIds.size > 0 ? `선택(${checkedIds.size})건 다운로드` : '엑셀 다운로드'}
+            </button>
+          </div>
         </div>
-        <div className="overflow-x-auto rounded-lg border border-gray-200 max-h-80 overflow-y-auto">
+        <div className="overflow-x-auto rounded-lg border border-gray-200">
           <table className="w-full text-sm min-w-[900px]">
-            <thead className="bg-gray-50 text-gray-500 text-xs sticky top-0">
+            <thead className="bg-gray-50 text-gray-500 text-xs">
               <tr>
+                <th className="px-3 py-2 text-center w-10">
+                  <input type="checkbox" checked={allPageChecked} onChange={toggleAll} className="cursor-pointer" />
+                </th>
                 <th className="px-3 py-2 text-center w-12">번호</th>
                 <th className="px-3 py-2 text-left">이름</th>
                 <th className="px-3 py-2 text-left">휴대폰번호</th>
@@ -563,12 +610,15 @@ export default function OrderUploadPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loadingOrders ? (
-                <tr><td colSpan={8} className="text-center py-8 text-gray-400">로딩 중...</td></tr>
-              ) : filtered.length === 0 ? (
-                <tr><td colSpan={8} className="text-center py-8 text-gray-300">데이터가 없습니다</td></tr>
-              ) : filtered.map((o, i) => (
-                <tr key={o.id} className="hover:bg-gray-50">
-                  <td className="px-3 py-2 text-center text-gray-400">{i + 1}</td>
+                <tr><td colSpan={9} className="text-center py-8 text-gray-400">로딩 중...</td></tr>
+              ) : paged.length === 0 ? (
+                <tr><td colSpan={9} className="text-center py-8 text-gray-300">데이터가 없습니다</td></tr>
+              ) : paged.map((o, i) => (
+                <tr key={o.id} className={`hover:bg-gray-50 ${checkedIds.has(o.id) ? 'bg-indigo-50' : ''}`}>
+                  <td className="px-3 py-2 text-center">
+                    <input type="checkbox" checked={checkedIds.has(o.id)} onChange={() => toggleOne(o.id)} className="cursor-pointer" />
+                  </td>
+                  <td className="px-3 py-2 text-center text-gray-400">{(page - 1) * pageSize + i + 1}</td>
                   <td className="px-3 py-2 font-medium">{o.receiver_name || '-'}</td>
                   <td className="px-3 py-2">{o.receiver_phone || '-'}</td>
                   <td className="px-3 py-2">
@@ -585,27 +635,48 @@ export default function OrderUploadPage() {
             </tbody>
           </table>
         </div>
+        {totalPages > 1 && (
+          <div className="flex justify-center gap-1 mt-3">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+              className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 disabled:opacity-40 hover:bg-gray-50">이전</button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+              .map((p, i, arr) => (
+                <span key={p}>
+                  {i > 0 && arr[i - 1] !== p - 1 && <span className="px-2 py-1.5 text-gray-400">…</span>}
+                  <button onClick={() => setPage(p)}
+                    className={`px-3 py-1.5 text-sm rounded-lg border ${p === page ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 hover:bg-gray-50'}`}>{p}</button>
+                </span>
+              ))}
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+              className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 disabled:opacity-40 hover:bg-gray-50">다음</button>
+          </div>
+        )}
       </div>
 
       {/* ─── 하단 테이블: 배송 라벨 ─── */}
       <div className="bg-white rounded-xl shadow p-5">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <h2 className="text-base font-semibold text-gray-700">
             배송 정보
             <span className="ml-2 text-sm font-normal text-gray-400">{filtered.length}건</span>
+            {checkedIds.size > 0 && <span className="ml-2 text-sm font-normal text-indigo-500">{checkedIds.size}개 선택</span>}
           </h2>
           <button
             onClick={downloadShippingTable}
             disabled={!filtered.length}
             className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-emerald-700 disabled:opacity-40 transition"
           >
-            엑셀 다운로드
+            {checkedIds.size > 0 ? `선택(${checkedIds.size})건 다운로드` : '엑셀 다운로드'}
           </button>
         </div>
-        <div className="overflow-x-auto rounded-lg border border-gray-200 max-h-80 overflow-y-auto">
+        <div className="overflow-x-auto rounded-lg border border-gray-200">
           <table className="w-full text-xs min-w-[1600px]">
-            <thead className="bg-gray-50 text-gray-500 sticky top-0">
+            <thead className="bg-gray-50 text-gray-500">
               <tr>
+                <th className="px-2 py-2 text-center w-10">
+                  <input type="checkbox" checked={allPageChecked} onChange={toggleAll} className="cursor-pointer" />
+                </th>
                 <th className="px-2 py-2 text-left whitespace-nowrap">보내는분성명</th>
                 <th className="px-2 py-2 text-left whitespace-nowrap">보내는분주소(전체)</th>
                 <th className="px-2 py-2 text-left whitespace-nowrap">보내는분주소(분할주소1)</th>
@@ -625,16 +696,19 @@ export default function OrderUploadPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loadingOrders ? (
-                <tr><td colSpan={15} className="text-center py-8 text-gray-400">로딩 중...</td></tr>
-              ) : filtered.length === 0 ? (
-                <tr><td colSpan={15} className="text-center py-8 text-gray-300">데이터가 없습니다</td></tr>
-              ) : filtered.map(o => {
+                <tr><td colSpan={16} className="text-center py-8 text-gray-400">로딩 중...</td></tr>
+              ) : paged.length === 0 ? (
+                <tr><td colSpan={16} className="text-center py-8 text-gray-300">데이터가 없습니다</td></tr>
+              ) : paged.map(o => {
                 const receiverAddrFull = [o.receiver_address, o.receiver_address_detail].filter(Boolean).join(' ')
                 const receiverAddrWithZip = [o.receiver_zip, receiverAddrFull].filter(Boolean).join(' ')
                 const receiverAddrSplit = splitAddress(receiverAddrFull)
                 const buyerAddrSplit = splitAddress(o.buyer_address || '')
                 return (
-                  <tr key={o.id + '_ship'} className="hover:bg-gray-50">
+                  <tr key={o.id + '_ship'} className={`hover:bg-gray-50 ${checkedIds.has(o.id) ? 'bg-indigo-50' : ''}`}>
+                    <td className="px-2 py-2 text-center">
+                      <input type="checkbox" checked={checkedIds.has(o.id)} onChange={() => toggleOne(o.id)} className="cursor-pointer" />
+                    </td>
                     <td className="px-2 py-2">{o.buyer_name || '-'}</td>
                     <td className="px-2 py-2 max-w-[140px] truncate text-gray-500">{o.buyer_address || '-'}</td>
                     <td className="px-2 py-2 max-w-[140px] truncate text-gray-500">{buyerAddrSplit.main || '-'}</td>
