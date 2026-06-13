@@ -40,10 +40,13 @@ export default function History() {
   const months = [...new Set(sales.map(s => s.sale_month).filter(Boolean))].sort()
 
   const filtered = sales.filter(s => {
+    const displayName = s.members?.name || s.receiver_name || ''
+    const displayPhone = s.members?.phone || s.receiver_phone || ''
+    const displayProduct = s.products?.name || s.item_detail || ''
     const matchSearch = !search ||
-      s.members?.name?.includes(search) ||
-      s.members?.phone?.includes(search) ||
-      s.products?.name?.includes(search)
+      displayName.includes(search) ||
+      displayPhone.includes(search) ||
+      displayProduct.includes(search)
     const matchChannel = !channelFilter || s.channels?.name === channelFilter
     const matchMonth = !monthFilter || s.sale_month === monthFilter
     return matchSearch && matchChannel && matchMonth
@@ -54,9 +57,9 @@ export default function History() {
   function downloadExcel() {
     const rows = filtered.map((s, i) => ({
       번호: i + 1,
-      회원명: s.members?.name || '',
-      전화번호: s.members?.phone || '',
-      상품: s.products?.name || '',
+      회원명: s.members?.name || s.receiver_name || '',
+      전화번호: s.members?.phone || s.receiver_phone || '',
+      상품: s.products?.name || s.item_detail || '',
       채널: s.channels?.name || '',
       수량: s.quantity,
       금액: s.total_price,
@@ -139,9 +142,9 @@ export default function History() {
               ) : paged.map((s, i) => (
                 <tr key={s.id} className="border-t hover:bg-gray-50">
                   <td className="px-4 py-3 text-gray-400 text-xs">{pageSize === 0 ? i + 1 : (page - 1) * pageSize + i + 1}</td>
-                  <td className="px-4 py-3 font-medium">{s.members?.name}</td>
-                  <td className="px-4 py-3 text-gray-500">{s.members?.phone}</td>
-                  <td className="px-4 py-3">{s.products?.name}</td>
+                  <td className="px-4 py-3 font-medium">{s.members?.name || s.receiver_name}</td>
+                  <td className="px-4 py-3 text-gray-500">{s.members?.phone || s.receiver_phone}</td>
+                  <td className="px-4 py-3">{s.products?.name || s.item_detail}</td>
                   <td className="px-4 py-3">
                     <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs">{s.channels?.name}</span>
                   </td>
