@@ -23,6 +23,7 @@ export default function NavBar() {
         <Link href="/sales" className="hover:text-indigo-200 text-sm font-medium">판매 입력</Link>
         <Link href="/history" className="hover:text-indigo-200 text-sm font-medium">판매 내역</Link>
         <Link href="/settings" className="hover:text-indigo-200 text-sm font-medium">상품/채널 설정</Link>
+        <Link href="/order-upload" className="hover:text-indigo-200 text-sm font-medium">각 채널별 주문서</Link>
         <Link href="/delivery" className="hover:text-indigo-200 text-sm font-medium">택배 관리</Link>
         <div className="ml-auto">
           <button
