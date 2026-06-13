@@ -4,6 +4,15 @@ import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
 import * as XLSX from 'xlsx'
 
+// items: [{label, qty}, ...] → "카라세움 실버x2 / 카라세움 골드x1"
+function buildItemDetail(items) {
+  const counts = {}
+  for (const { label, qty } of items) {
+    counts[label] = (counts[label] || 0) + qty
+  }
+  return Object.entries(counts).map(([label, qty]) => `${label}x${qty}`).join(' / ')
+}
+
 // ──────────────────────────────────────────────
 // 채널별 파싱 함수
 // ──────────────────────────────────────────────
@@ -27,7 +36,9 @@ function parseJasaMol(raw) {
         items: [],
       }
     }
-    groups[orderNo].items.push(String(row['주문상품명(옵션포함)'] || row['주문상품명'] || '').trim())
+    const itemLabel = String(row['주문상품명(옵션포함)'] || row['주문상품명'] || '').trim()
+    const qty = parseInt(row['수량'] || 1) || 1
+    groups[orderNo].items.push({ label: itemLabel, qty })
   }
   return Object.values(groups).map(g => ({
     ...g,
@@ -36,8 +47,8 @@ function parseJasaMol(raw) {
     buyer_address: '',
     receiver_phone2: '',
     item_name: '카라세움',
-    item_detail: g.items.join(' / '),
-    item_qty: g.items.length,
+    item_detail: buildItemDetail(g.items),
+    item_qty: g.items.reduce((s, i) => s + i.qty, 0),
     note: '',
   }))
 }
@@ -69,13 +80,15 @@ function parseCoupang(raw) {
     }
     const productName = String(row['등록상품명'] || '').trim()
     const optionName = String(row['등록옵션명'] || '').trim()
-    groups[bundleNo].items.push(optionName ? `${productName} (${optionName})` : productName)
+    const qty = parseInt(row['구매수(수량)'] || 1) || 1
+    const label = optionName ? `${productName} (${optionName})` : productName
+    groups[bundleNo].items.push({ label, qty })
   }
   return Object.values(groups).map(g => ({
     ...g,
     item_name: '카라세움',
-    item_detail: g.items.join(' / '),
-    item_qty: g.items.length,
+    item_detail: buildItemDetail(g.items),
+    item_qty: g.items.reduce((s, i) => s + i.qty, 0),
     note: '',
   }))
 }
@@ -114,16 +127,15 @@ function parseOwnerClan(raw) {
     const productName = String(row['상품명'] || '').trim()
     const option = String(row['옵션'] || '').trim()
     const qty = parseInt(row['수량'] || 1) || 1
-    const itemLabel = option ? `${productName} (${option})` : productName
-    groups[orderNo].items.push(itemLabel)
-    groups[orderNo].totalQty += qty
+    const label = option ? `${productName} (${option})` : productName
+    groups[orderNo].items.push({ label, qty })
     groups[orderNo].total_price += parseFloat(row['오너클랜 정산예정금액'] || 0) || 0
   }
   return Object.values(groups).map(g => ({
     ...g,
     item_name: '카라세움',
-    item_detail: g.items.join(' / '),
-    item_qty: g.totalQty,
+    item_detail: buildItemDetail(g.items),
+    item_qty: g.items.reduce((s, i) => s + i.qty, 0),
     note: '',
   }))
 }
