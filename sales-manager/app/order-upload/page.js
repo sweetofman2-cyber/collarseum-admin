@@ -301,6 +301,9 @@ export default function OrderUploadPage() {
       total_price: Math.round(r.total_price || 0),
       note: r.note || null,
       quantity: r.item_qty || 1,
+      sale_month: r.ordered_at
+        ? String(r.ordered_at.getFullYear()).slice(2) + String(r.ordered_at.getMonth() + 1).padStart(2, '0')
+        : null,
     }))
 
     const { error } = await supabase.from('sales').insert(inserts)
