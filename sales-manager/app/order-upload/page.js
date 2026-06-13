@@ -4,13 +4,32 @@ import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
 import * as XLSX from 'xlsx'
 
-// items: [{label, qty}, ...] → "카라세움 실버x2 / 카라세움 골드x1"
+// "카라세움 레전드 블랙 SET" → "레전드블랙"
+function shortenProductName(label) {
+  let s = label
+  // (제품선택=카라세움 XXX) 패턴에서 핵심 추출
+  const m1 = s.match(/\(제품선택=카라세움\s+(.+?)\)/)
+  if (m1) s = m1[1]
+  else {
+    // (카라세움 XXX) 패턴에서 핵심 추출
+    const m2 = s.match(/\(카라세움\s+(.+?)\)/)
+    if (m2) s = m2[1]
+  }
+  s = s.replace(/셔츠손상없이\s*카라를\s*세워?주는\s*/g, '')
+  s = s.replace(/카라세움\s*/g, '')
+  s = s.replace(/\s*SET\s*/gi, '')
+  s = s.trim().replace(/\s+/g, '')
+  return s || label
+}
+
+// items: [{label, qty}, ...] → "실버2 / 골드1"
 function buildItemDetail(items) {
   const counts = {}
   for (const { label, qty } of items) {
-    counts[label] = (counts[label] || 0) + qty
+    const short = shortenProductName(label)
+    counts[short] = (counts[short] || 0) + qty
   }
-  return Object.entries(counts).map(([label, qty]) => `${label}x${qty}`).join(' / ')
+  return Object.entries(counts).map(([name, qty]) => `${name}${qty}`).join(' / ')
 }
 
 // ──────────────────────────────────────────────
