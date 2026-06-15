@@ -432,11 +432,11 @@ export default function OrderUploadPage() {
       <h1 className="text-2xl font-bold text-gray-800 mb-6">각 채널별 주문서</h1>
 
       {/* 빠른 복사 */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 mb-4 flex items-center gap-3">
-        <span className="text-xs text-gray-500 font-mono select-all">세움{'\t'}의정부 누원로51 수락리버시티 104-1304{'\t'}010-6327-9077</span>
+      <div style={{background:'#fefce8', border:'1px solid #fde68a', borderRadius:'12px', padding:'10px 16px', marginBottom:'16px', display:'flex', alignItems:'center', gap:'12px'}}>
+        <span style={{fontSize:'12px', color:'#6b7280', fontFamily:'monospace'}} className="select-all">세움{'  '}의정부 누원로51 수락리버시티 104-1304{'  '}010-6327-9077</span>
         <button
           onClick={copyQuickText}
-          className="shrink-0 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 text-xs font-semibold px-3 py-1.5 rounded-lg transition"
+          style={{flexShrink:0, background:'#facc15', color:'#713f12', fontSize:'12px', fontWeight:600, padding:'6px 12px', borderRadius:'8px', border:'none', cursor:'pointer'}}
         >
           복사
         </button>
