@@ -198,8 +198,9 @@ export default function OrderUploadPage() {
 
   // 검색/필터
   const [search, setSearch] = useState('')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
+  const today = new Date().toISOString().slice(0, 10)
+  const [dateFrom, setDateFrom] = useState(today)
+  const [dateTo, setDateTo] = useState(today)
   const [filterChannel, setFilterChannel] = useState('')
 
   // 페이징
