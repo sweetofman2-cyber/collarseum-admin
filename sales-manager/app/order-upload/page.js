@@ -37,6 +37,10 @@ function buildItemDetail(items) {
 // ──────────────────────────────────────────────
 function parseJasaMol(raw) {
   // 자사몰 CSV: 주문번호 기준 그룹화 (같은 주문번호 → 상품 합치기)
+  if (raw.length > 0) {
+    console.log('[자사몰 컬럼명]', Object.keys(raw[0]))
+    console.log('[첫번째 행]', raw[0])
+  }
   const groups = {}
   for (const row of raw) {
     const orderNo = String(row['주문번호'] || '').trim()
@@ -51,7 +55,7 @@ function parseJasaMol(raw) {
         receiver_address_detail: String(row['수령인 상세 주소'] || '').trim(),
         receiver_zip: String(row['수령인 우편번호'] || '').trim(),
         delivery_msg: String(row['배송메시지'] || '').trim(),
-        total_price: parseFloat(row['총 결제금액'] || 0) || 0,
+        total_price: parseFloat(row['총 결제금액'] || 0) || parseFloat(row['총 주문금액'] || 0) || 0,
         items: [],
       }
     }
@@ -418,9 +422,25 @@ export default function OrderUploadPage() {
     downloadExcel(rows, `배송목록_${new Date().toISOString().slice(0,10)}.xlsx`)
   }
 
+  function copyQuickText() {
+    const text = '세움\t의정부 누원로51 수락리버시티 104-1304\t010-6327-9077'
+    navigator.clipboard.writeText(text).then(() => toast.success('복사되었습니다!'))
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">각 채널별 주문서</h1>
+
+      {/* 빠른 복사 */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 mb-4 flex items-center gap-3">
+        <span className="text-xs text-gray-500 font-mono select-all">세움{'\t'}의정부 누원로51 수락리버시티 104-1304{'\t'}010-6327-9077</span>
+        <button
+          onClick={copyQuickText}
+          className="shrink-0 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 text-xs font-semibold px-3 py-1.5 rounded-lg transition"
+        >
+          복사
+        </button>
+      </div>
 
       {/* 업로드 카드 */}
       <div className="bg-white rounded-xl shadow p-5 mb-6">
