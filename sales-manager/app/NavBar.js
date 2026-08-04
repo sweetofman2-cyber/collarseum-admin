@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { href: '/members', label: '회원 관리' },
   { href: '/sales', label: '판매 입력' },
   { href: '/history', label: '판매 내역' },
+  { href: '/revenue', label: '매출 내역' },
   { href: '/settings', label: '상품/채널 설정' },
   { href: '/order-upload', label: '각 채널별 주문서' },
   { href: '/delivery', label: '택배 관리' },
