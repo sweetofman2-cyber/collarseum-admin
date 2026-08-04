@@ -82,13 +82,13 @@ export default function History() {
       {/* 필터 */}
       <div className="flex flex-wrap gap-3 mb-4 items-center">
         <input
-          className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 w-56"
+          className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 w-56"
           placeholder="회원명 / 전화번호 / 상품 검색"
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
         <select
-          className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           value={channelFilter}
           onChange={e => setChannelFilter(e.target.value)}
         >
@@ -96,7 +96,7 @@ export default function History() {
           {channels.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
         </select>
         <select
-          className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           value={monthFilter}
           onChange={e => setMonthFilter(e.target.value)}
         >
@@ -105,7 +105,7 @@ export default function History() {
         </select>
         <span className="text-sm text-gray-500">{filtered.length}건</span>
         <select
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           value={pageSize}
           onChange={e => { setPageSize(Number(e.target.value)); setPage(1) }}
         >
@@ -113,10 +113,10 @@ export default function History() {
           <option value={0}>전체 보기</option>
         </select>
         <button onClick={downloadExcel} className="bg-emerald-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-emerald-600 transition">엑셀 다운로드</button>
-        <span className="ml-auto text-sm font-medium text-indigo-700">합계: {totalRevenue.toLocaleString()}원</span>
+        <span className="ml-auto text-sm font-medium text-brand-700">합계: {totalRevenue.toLocaleString()}원</span>
       </div>
 
-      <div className="bg-white rounded-xl shadow overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {loading ? (
           <p className="text-center py-10 text-gray-400">로딩 중...</p>
         ) : (
@@ -146,10 +146,10 @@ export default function History() {
                   <td className="px-4 py-3 text-gray-500">{s.members?.phone || s.receiver_phone}</td>
                   <td className="px-4 py-3">{s.products?.name || s.item_detail}</td>
                   <td className="px-4 py-3">
-                    <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs">{s.channels?.name}</span>
+                    <span className="bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full text-xs">{s.channels?.name}</span>
                   </td>
                   <td className="px-4 py-3 text-center">{s.quantity}</td>
-                  <td className="px-4 py-3 text-right font-medium text-indigo-700">{s.total_price?.toLocaleString()}원</td>
+                  <td className="px-4 py-3 text-right font-medium text-brand-700">{s.total_price?.toLocaleString()}원</td>
                   <td className="px-4 py-3 text-xs">
                     {s.sale_month
                       ? <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">{s.sale_month}</span>
@@ -175,7 +175,7 @@ export default function History() {
             <span key={p}>
               {i > 0 && arr[i - 1] !== p - 1 && <span className="px-2 py-1.5 text-gray-400">…</span>}
               <button onClick={() => setPage(p)}
-                className={`px-3 py-1.5 text-sm rounded-lg border ${p === page ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 hover:bg-gray-50'}`}>{p}</button>
+                className={`px-3 py-1.5 text-sm rounded-lg border ${p === page ? 'bg-brand-600 text-white border-brand-600' : 'border-gray-300 hover:bg-gray-50'}`}>{p}</button>
             </span>
           ))}
           <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}

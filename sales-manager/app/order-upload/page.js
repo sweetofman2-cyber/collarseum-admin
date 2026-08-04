@@ -444,11 +444,11 @@ export default function OrderUploadPage() {
       </div>
 
       {/* 업로드 카드 */}
-      <div className="bg-white rounded-xl shadow p-5 mb-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
         <h2 className="text-base font-semibold text-gray-700 mb-3">채널 선택 및 파일 업로드</h2>
         <div className="flex flex-wrap items-center gap-3 mb-4">
           <select
-            className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
             value={channel}
             onChange={e => { setChannel(e.target.value); setPreview(null) }}
           >
@@ -456,7 +456,7 @@ export default function OrderUploadPage() {
           </select>
           <button
             onClick={() => fileRef.current?.click()}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 transition"
+            className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-brand-700 transition"
           >
             {channel} 파일 선택
           </button>
@@ -515,7 +515,7 @@ export default function OrderUploadPage() {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition"
+                  className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition"
                 >
                   {saving ? '저장 중...' : `${preview.length}건 저장`}
                 </button>
@@ -526,12 +526,12 @@ export default function OrderUploadPage() {
       </div>
 
       {/* 검색/필터 */}
-      <div className="bg-white rounded-xl shadow p-4 mb-4">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
         <div className="flex flex-wrap gap-3 items-end">
           <div>
             <label className="block text-xs text-gray-500 mb-1">검색</label>
             <input
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-brand-400"
               placeholder="이름, 전화번호, 주문번호, 상품명"
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -540,7 +540,7 @@ export default function OrderUploadPage() {
           <div>
             <label className="block text-xs text-gray-500 mb-1">채널</label>
             <select
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
               value={filterChannel}
               onChange={e => setFilterChannel(e.target.value)}
             >
@@ -552,7 +552,7 @@ export default function OrderUploadPage() {
             <label className="block text-xs text-gray-500 mb-1">주문일 시작</label>
             <input
               type="date"
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
               value={dateFrom}
               onChange={e => setDateFrom(e.target.value)}
             />
@@ -561,14 +561,14 @@ export default function OrderUploadPage() {
             <label className="block text-xs text-gray-500 mb-1">주문일 종료</label>
             <input
               type="date"
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
               value={dateTo}
               onChange={e => setDateTo(e.target.value)}
             />
           </div>
           <button
             onClick={loadOrders}
-            className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+            className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition"
           >
             조회
           </button>
@@ -582,16 +582,16 @@ export default function OrderUploadPage() {
       </div>
 
       {/* ─── 상단 테이블: 주문 목록 ─── */}
-      <div className="bg-white rounded-xl shadow p-5 mb-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <h2 className="text-base font-semibold text-gray-700">
             주문 목록
             <span className="ml-2 text-sm font-normal text-gray-400">{filtered.length}건</span>
-            {checkedIds.size > 0 && <span className="ml-2 text-sm font-normal text-indigo-500">{checkedIds.size}개 선택</span>}
+            {checkedIds.size > 0 && <span className="ml-2 text-sm font-normal text-brand-500">{checkedIds.size}개 선택</span>}
           </h2>
           <div className="flex items-center gap-2">
             <select
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
               value={pageSize}
               onChange={e => { setPageSize(Number(e.target.value)); setPage(1); setCheckedIds(new Set()) }}
             >
@@ -630,7 +630,7 @@ export default function OrderUploadPage() {
               ) : paged.length === 0 ? (
                 <tr><td colSpan={9} className="text-center py-8 text-gray-300">데이터가 없습니다</td></tr>
               ) : paged.map((o, i) => (
-                <tr key={o.id} className={`hover:bg-gray-50 ${checkedIds.has(o.id) ? 'bg-indigo-50' : ''}`}>
+                <tr key={o.id} className={`hover:bg-gray-50 ${checkedIds.has(o.id) ? 'bg-brand-50' : ''}`}>
                   <td className="px-3 py-2 text-center">
                     <input type="checkbox" checked={checkedIds.has(o.id)} onChange={() => toggleOne(o.id)} className="cursor-pointer" />
                   </td>
@@ -638,7 +638,7 @@ export default function OrderUploadPage() {
                   <td className="px-3 py-2 font-medium">{o.receiver_name || '-'}</td>
                   <td className="px-3 py-2">{o.receiver_phone || '-'}</td>
                   <td className="px-3 py-2">
-                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
+                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-700">
                       {o.channels?.name || '-'}
                     </span>
                   </td>
@@ -661,7 +661,7 @@ export default function OrderUploadPage() {
                 <span key={p}>
                   {i > 0 && arr[i - 1] !== p - 1 && <span className="px-2 py-1.5 text-gray-400">…</span>}
                   <button onClick={() => setPage(p)}
-                    className={`px-3 py-1.5 text-sm rounded-lg border ${p === page ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 hover:bg-gray-50'}`}>{p}</button>
+                    className={`px-3 py-1.5 text-sm rounded-lg border ${p === page ? 'bg-brand-600 text-white border-brand-600' : 'border-gray-300 hover:bg-gray-50'}`}>{p}</button>
                 </span>
               ))}
             <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
@@ -671,12 +671,12 @@ export default function OrderUploadPage() {
       </div>
 
       {/* ─── 하단 테이블: 배송 라벨 ─── */}
-      <div className="bg-white rounded-xl shadow p-5">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <h2 className="text-base font-semibold text-gray-700">
             배송 정보
             <span className="ml-2 text-sm font-normal text-gray-400">{filtered.length}건</span>
-            {checkedIds.size > 0 && <span className="ml-2 text-sm font-normal text-indigo-500">{checkedIds.size}개 선택</span>}
+            {checkedIds.size > 0 && <span className="ml-2 text-sm font-normal text-brand-500">{checkedIds.size}개 선택</span>}
           </h2>
           <button
             onClick={downloadShippingTable}
@@ -716,7 +716,7 @@ export default function OrderUploadPage() {
                 const receiverAddrWithZip = [o.receiver_zip, receiverAddrFull].filter(Boolean).join(' ')
                 const receiverAddrSplit = splitAddress(receiverAddrFull)
                 return (
-                  <tr key={o.id + '_ship'} className={`hover:bg-gray-50 ${checkedIds.has(o.id) ? 'bg-indigo-50' : ''}`}>
+                  <tr key={o.id + '_ship'} className={`hover:bg-gray-50 ${checkedIds.has(o.id) ? 'bg-brand-50' : ''}`}>
                     <td className="px-2 py-2 text-center">
                       <input type="checkbox" checked={checkedIds.has(o.id)} onChange={() => toggleOne(o.id)} className="cursor-pointer" />
                     </td>

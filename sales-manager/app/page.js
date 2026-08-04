@@ -48,10 +48,10 @@ export default function Dashboard() {
   }, [])
 
   const cards = [
-    { label: '전체 회원', value: stats.members + '명', color: 'bg-indigo-500', icon: '👥' },
-    { label: '전체 판매건', value: stats.sales + '건', color: 'bg-emerald-500', icon: '🛒' },
-    { label: '누적 매출', value: stats.revenue.toLocaleString() + '원', color: 'bg-amber-500', icon: '💰' },
-    { label: '오늘 매출', value: stats.today.toLocaleString() + '원', color: 'bg-rose-500', icon: '📅' },
+    { label: '전체 회원', value: stats.members + '명', iconBg: 'bg-navy-50', iconText: 'text-navy-600', icon: '👥' },
+    { label: '전체 판매건', value: stats.sales + '건', iconBg: 'bg-brand-50', iconText: 'text-brand-600', icon: '🛒' },
+    { label: '누적 매출', value: stats.revenue.toLocaleString() + '원', iconBg: 'bg-amber-50', iconText: 'text-amber-600', icon: '💰' },
+    { label: '오늘 매출', value: stats.today.toLocaleString() + '원', iconBg: 'bg-emerald-50', iconText: 'text-emerald-600', icon: '📅' },
   ]
 
   return (
@@ -60,18 +60,18 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {cards.map(c => (
-          <div key={c.label} className={`${c.color} text-white rounded-xl p-5 shadow`}>
-            <div className="text-2xl mb-1">{c.icon}</div>
-            <div className="text-2xl font-bold">{c.value}</div>
-            <div className="text-sm opacity-80 mt-1">{c.label}</div>
+          <div key={c.label} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <div className={`w-10 h-10 rounded-full ${c.iconBg} ${c.iconText} flex items-center justify-center text-lg mb-3`}>{c.icon}</div>
+            <div className="text-2xl font-bold text-gray-800">{c.value}</div>
+            <div className="text-sm text-gray-400 mt-1">{c.label}</div>
           </div>
         ))}
       </div>
 
-      <div className="bg-white rounded-xl shadow p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-700">최근 판매 내역</h2>
-          <Link href="/history" className="text-sm text-indigo-600 hover:underline">전체 보기 →</Link>
+          <Link href="/history" className="text-sm text-brand-600 hover:underline">전체 보기 →</Link>
         </div>
         {recent.length === 0 ? (
           <p className="text-gray-400 text-sm py-4 text-center">판매 내역이 없습니다.</p>
@@ -92,7 +92,7 @@ export default function Dashboard() {
                   <td className="py-2 font-medium">{s.members?.name}</td>
                   <td className="py-2 text-gray-600">{s.products?.name}</td>
                   <td className="py-2 text-gray-500">{s.channels?.name}</td>
-                  <td className="py-2 text-right font-medium text-indigo-700">{s.total_price?.toLocaleString()}원</td>
+                  <td className="py-2 text-right font-medium text-brand-700">{s.total_price?.toLocaleString()}원</td>
                   <td className="py-2 text-right text-gray-400">{s.sold_at?.slice(0, 10)}</td>
                 </tr>
               ))}
@@ -102,7 +102,7 @@ export default function Dashboard() {
       </div>
 
       <div className="mt-6 flex gap-4">
-        <Link href="/sales" className="flex-1 bg-indigo-600 text-white text-center py-3 rounded-xl font-medium hover:bg-indigo-700 transition">
+        <Link href="/sales" className="flex-1 bg-brand-600 text-white text-center py-3 rounded-xl font-medium hover:bg-brand-700 transition">
           + 판매 입력
         </Link>
         <Link href="/members" className="flex-1 bg-white border border-gray-200 text-gray-700 text-center py-3 rounded-xl font-medium hover:bg-gray-50 transition">

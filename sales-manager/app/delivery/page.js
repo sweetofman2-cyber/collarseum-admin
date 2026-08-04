@@ -93,10 +93,10 @@ export default function DeliveryPage() {
               <button
                 key={ym}
                 onClick={() => setFilterMonth(ym)}
-                className={`rounded-xl p-4 text-left shadow-sm border transition ${filterMonth === ym ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-100 hover:border-indigo-300'}`}
+                className={`rounded-xl p-4 text-left shadow-sm border transition ${filterMonth === ym ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-gray-700 border-gray-100 hover:border-brand-300'}`}
               >
                 <div className="text-sm font-bold mb-1">{ym}</div>
-                <div className={`text-xs ${filterMonth === ym ? 'text-indigo-200' : 'text-gray-400'}`}>{stat.count.toLocaleString()}건</div>
+                <div className={`text-xs ${filterMonth === ym ? 'text-brand-200' : 'text-gray-400'}`}>{stat.count.toLocaleString()}건</div>
                 <div className="text-base font-semibold mt-0.5">{stat.total_cost.toLocaleString()}원</div>
               </button>
             ))}
@@ -106,14 +106,14 @@ export default function DeliveryPage() {
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* 입력 폼 */}
-        <div className="bg-white rounded-xl shadow p-5">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
           <h2 className="text-base font-semibold text-gray-700 mb-4">{editId ? '택배 내역 수정' : '택배 내역 추가'}</h2>
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
               <label className="text-xs text-gray-500 block mb-1">날짜</label>
               <input
                 type="date"
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-brand-400"
                 value={form.delivery_date}
                 onChange={e => setForm(p => ({ ...p, delivery_date: e.target.value }))}
               />
@@ -123,7 +123,7 @@ export default function DeliveryPage() {
               <input
                 type="number"
                 min="1"
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-brand-400"
                 placeholder="예: 30"
                 value={form.count}
                 onChange={e => setForm(p => ({ ...p, count: e.target.value }))}
@@ -134,28 +134,28 @@ export default function DeliveryPage() {
               <input
                 type="number"
                 min="0"
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-brand-400"
                 placeholder="예: 3500"
                 value={form.cost_per_item}
                 onChange={e => setForm(p => ({ ...p, cost_per_item: e.target.value }))}
               />
             </div>
             {form.count && form.cost_per_item && (
-              <div className="bg-indigo-50 rounded-lg px-4 py-2 text-sm text-indigo-700 font-medium">
+              <div className="bg-brand-50 rounded-lg px-4 py-2 text-sm text-brand-700 font-medium">
                 총 택배비: {(Number(form.count) * Number(form.cost_per_item)).toLocaleString()}원
               </div>
             )}
             <div>
               <label className="text-xs text-gray-500 block mb-1">메모 (선택)</label>
               <input
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-brand-400"
                 placeholder="특이사항 등"
                 value={form.note}
                 onChange={e => setForm(p => ({ ...p, note: e.target.value }))}
               />
             </div>
             <div className="flex gap-2 pt-1">
-              <button type="submit" className="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-indigo-700 transition w-full">
+              <button type="submit" className="bg-brand-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-brand-700 transition w-full">
                 {editId ? '수정 저장' : '추가'}
               </button>
               {editId && (
@@ -168,13 +168,13 @@ export default function DeliveryPage() {
         </div>
 
         {/* 월별 상세 내역 */}
-        <div className="bg-white rounded-xl shadow p-5">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-semibold text-gray-700">
               상세 내역
             </h2>
             <select
-              className="border border-gray-200 rounded-lg px-2 py-1 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="border border-gray-200 rounded-lg px-2 py-1 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-400"
               value={filterMonth}
               onChange={e => setFilterMonth(e.target.value)}
             >
@@ -192,7 +192,7 @@ export default function DeliveryPage() {
             </div>
             <div>
               <span className="text-gray-400 text-xs">총 택배비</span>
-              <div className="font-bold text-indigo-700">{filteredTotal.cost.toLocaleString()}원</div>
+              <div className="font-bold text-brand-700">{filteredTotal.cost.toLocaleString()}원</div>
             </div>
             {filteredTotal.count > 0 && (
               <div>
@@ -212,7 +212,7 @@ export default function DeliveryPage() {
                     <div className="font-medium text-gray-800">{r.delivery_date}</div>
                     <div className="text-xs text-gray-400 mt-0.5">
                       {r.count}건 × {r.cost_per_item.toLocaleString()}원
-                      = <span className="text-indigo-600 font-semibold">{(r.count * r.cost_per_item).toLocaleString()}원</span>
+                      = <span className="text-brand-600 font-semibold">{(r.count * r.cost_per_item).toLocaleString()}원</span>
                     </div>
                     {r.note && <div className="text-xs text-gray-400 mt-0.5">{r.note}</div>}
                   </div>
@@ -222,7 +222,7 @@ export default function DeliveryPage() {
                         setEditId(r.id)
                         setForm({ delivery_date: r.delivery_date, count: String(r.count), cost_per_item: String(r.cost_per_item), note: r.note || '' })
                       }}
-                      className="text-indigo-400 hover:underline text-xs">수정</button>
+                      className="text-brand-400 hover:underline text-xs">수정</button>
                     <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:underline text-xs">삭제</button>
                   </div>
                 </li>

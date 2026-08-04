@@ -84,19 +84,19 @@ export default function Members() {
       <h1 className="text-2xl font-bold text-gray-800 mb-6">회원 관리</h1>
 
       {/* 등록/수정 폼 */}
-      <div className="bg-white rounded-xl shadow p-6 mb-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-700 mb-4">
           {editId ? '✏️ 회원 정보 수정' : '➕ 회원 등록'}
         </h2>
         <form onSubmit={handleSubmit} className="flex flex-wrap gap-3">
           <input
-            className="border border-gray-300 rounded-lg px-4 py-2 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="border border-gray-300 rounded-lg px-4 py-2 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-brand-400"
             placeholder="이름"
             value={form.name}
             onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
           />
           <input
-            className="border border-gray-300 rounded-lg px-4 py-2 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="border border-gray-300 rounded-lg px-4 py-2 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-brand-400"
             placeholder="휴대폰 번호 (010-0000-0000)"
             value={form.phone}
             onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
@@ -104,7 +104,7 @@ export default function Members() {
           <button
             type="submit"
             disabled={loading}
-            className="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition"
+            className="bg-brand-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-50 transition"
           >
             {loading ? '처리 중...' : editId ? '수정 저장' : '등록'}
           </button>
@@ -123,7 +123,7 @@ export default function Members() {
       {/* 검색 */}
       <div className="mb-4">
         <input
-          className="border border-gray-300 rounded-lg px-4 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="border border-gray-300 rounded-lg px-4 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-brand-400"
           placeholder="이름 또는 전화번호 검색"
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -131,7 +131,7 @@ export default function Members() {
         <span className="ml-3 text-sm text-gray-500">총 {filtered.length}명</span>
         <button onClick={downloadExcel} className="ml-3 bg-emerald-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-emerald-600 transition">엑셀 다운로드</button>
         <select
-          className="ml-auto border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="ml-auto border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           value={pageSize}
           onChange={e => { setPageSize(Number(e.target.value)); setPage(1) }}
         >
@@ -141,7 +141,7 @@ export default function Members() {
       </div>
 
       {/* 목록 */}
-      <div className="bg-white rounded-xl shadow overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-500 text-left">
             <tr>
@@ -168,7 +168,7 @@ export default function Members() {
                 <td className="px-4 py-3 font-medium">{m.name}</td>
                 <td className="px-4 py-3 text-gray-600">{m.phone}</td>
                 <td className="px-4 py-3 text-center">
-                  <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs">
+                  <span className="bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full text-xs">
                     {m.sales?.length ?? 0}회
                   </span>
                 </td>
@@ -184,7 +184,7 @@ export default function Members() {
                 </td>
                 <td className="px-4 py-3 text-gray-400">{m.created_at?.slice(0, 10)}</td>
                 <td className="px-4 py-3 flex gap-2">
-                  <button onClick={() => startEdit(m)} className="text-indigo-500 hover:underline text-xs">수정</button>
+                  <button onClick={() => startEdit(m)} className="text-brand-500 hover:underline text-xs">수정</button>
                   <button onClick={() => handleDelete(m.id)} className="text-red-400 hover:underline text-xs">삭제</button>
                 </td>
               </tr>
@@ -202,7 +202,7 @@ export default function Members() {
             <span key={p}>
               {i > 0 && arr[i - 1] !== p - 1 && <span className="px-2 py-1.5 text-gray-400">…</span>}
               <button onClick={() => setPage(p)}
-                className={`px-3 py-1.5 text-sm rounded-lg border ${p === page ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 hover:bg-gray-50'}`}>{p}</button>
+                className={`px-3 py-1.5 text-sm rounded-lg border ${p === page ? 'bg-brand-600 text-white border-brand-600' : 'border-gray-300 hover:bg-gray-50'}`}>{p}</button>
             </span>
           ))}
           <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}

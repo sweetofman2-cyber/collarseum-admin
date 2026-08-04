@@ -309,7 +309,7 @@ export default function SalesInput() {
       <h1 className="text-2xl font-bold text-gray-800 mb-6">판매 입력</h1>
 
       {/* 엑셀 일괄 입력 */}
-      <div className="bg-white rounded-xl shadow p-5 mb-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="text-base font-semibold text-gray-700">엑셀 일괄 입력</h2>
@@ -317,13 +317,13 @@ export default function SalesInput() {
               <a
                 href="/판매내역_예시.xlsx"
                 download
-                className="ml-2 text-indigo-500 hover:text-indigo-700 underline"
+                className="ml-2 text-brand-500 hover:text-brand-700 underline"
               >예시 파일 다운로드</a>
             </p>
           </div>
           <button
             onClick={() => fileRef.current?.click()}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 transition"
+            className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-brand-700 transition"
           >
             엑셀 파일 선택
           </button>
@@ -398,7 +398,7 @@ export default function SalesInput() {
                 <button
                   onClick={handleImport}
                   disabled={importing}
-                  className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition"
+                  className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition"
                 >
                   {importing ? '등록 중...' : '일괄 등록'}
                 </button>
@@ -409,7 +409,7 @@ export default function SalesInput() {
       </div>
 
       {/* 개별 입력 폼 */}
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow p-6 flex flex-col gap-5">
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-5">
         <h2 className="text-base font-semibold text-gray-700 -mb-2">개별 입력</h2>
 
         {/* 회원 검색 */}
@@ -417,7 +417,7 @@ export default function SalesInput() {
           <label className="block text-sm font-medium text-gray-700 mb-1">회원 검색 <span className="text-red-500">*</span></label>
           <div className="relative">
             <input
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
               placeholder="이름 또는 휴대폰 번호 입력"
               value={form.phone}
               onChange={handlePhoneChange}
@@ -427,7 +427,7 @@ export default function SalesInput() {
                 {memberSuggestions.map(m => (
                   <li
                     key={m.id}
-                    className="px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm flex justify-between"
+                    className="px-4 py-2 hover:bg-brand-50 cursor-pointer text-sm flex justify-between"
                     onClick={() => selectMember(m)}
                   >
                     <span className="font-medium">{m.name}</span>
@@ -438,7 +438,7 @@ export default function SalesInput() {
             )}
           </div>
           {selectedMember && (
-            <div className="mt-2 bg-indigo-50 rounded-lg px-3 py-2 text-sm flex items-center justify-between">
+            <div className="mt-2 bg-brand-50 rounded-lg px-3 py-2 text-sm flex items-center justify-between">
               <span>✅ <strong>{selectedMember.name}</strong> ({selectedMember.phone})</span>
               <button type="button" onClick={() => { setSelectedMember(null); setForm(p => ({ ...p, member_id: '', phone: '' })) }} className="text-gray-400 hover:text-red-400 ml-2">✕</button>
             </div>
@@ -456,8 +456,8 @@ export default function SalesInput() {
                 onClick={() => setForm(p => ({ ...p, channel_id: c.id }))}
                 className={`px-4 py-2 rounded-full text-sm border transition ${
                   form.channel_id == c.id
-                    ? 'bg-indigo-600 text-white border-indigo-600'
-                    : 'bg-white text-gray-600 border-gray-300 hover:border-indigo-400'
+                    ? 'bg-brand-600 text-white border-brand-600'
+                    : 'bg-white text-gray-600 border-gray-300 hover:border-brand-400'
                 }`}
               >
                 {c.name}
@@ -470,7 +470,7 @@ export default function SalesInput() {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">상품 <span className="text-red-500">*</span></label>
           <select
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
             value={form.product_id}
             onChange={handleProductChange}
           >
@@ -487,7 +487,7 @@ export default function SalesInput() {
           <input
             type="number"
             min={1}
-            className="w-24 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="w-24 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
             value={form.quantity}
             onChange={e => setForm(p => ({ ...p, quantity: Math.max(1, Number(e.target.value)) }))}
           />
@@ -497,7 +497,7 @@ export default function SalesInput() {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">메모</label>
           <input
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
             placeholder="선택 입력"
             value={form.note}
             onChange={e => setForm(p => ({ ...p, note: e.target.value }))}
@@ -506,16 +506,16 @@ export default function SalesInput() {
 
         {/* 합계 */}
         {totalPrice > 0 && (
-          <div className="bg-indigo-50 rounded-lg px-4 py-3 flex justify-between text-sm">
+          <div className="bg-brand-50 rounded-lg px-4 py-3 flex justify-between text-sm">
             <span className="text-gray-600">결제 금액</span>
-            <span className="font-bold text-indigo-700 text-base">{totalPrice.toLocaleString()}원</span>
+            <span className="font-bold text-brand-700 text-base">{totalPrice.toLocaleString()}원</span>
           </div>
         )}
 
         <button
           type="submit"
           disabled={loading}
-          className="bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 transition"
+          className="bg-brand-600 text-white py-3 rounded-lg font-medium hover:bg-brand-700 disabled:opacity-50 transition"
         >
           {loading ? '저장 중...' : '판매 등록'}
         </button>
