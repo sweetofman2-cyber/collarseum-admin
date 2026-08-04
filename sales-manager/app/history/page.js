@@ -55,14 +55,35 @@ export default function History() {
   const totalRevenue = filtered.reduce((sum, s) => sum + (s.total_price || 0), 0)
 
   const productRanking = useMemo(() => {
-    const map = {}
+    // 상품명 정규화 키(공백 제거)로 그룹화해서, product_id로 연결된 판매 건과
+    // 채널별 주문서(item_detail 텍스트)로만 기록된 판매 건을 같은 상품으로 합산한다.
+    const map = {} // normKey -> { qty, display }
+    function add(normKey, qty, display) {
+      if (!normKey || !qty) return
+      if (!map[normKey]) map[normKey] = { qty: 0, display: null }
+      map[normKey].qty += qty
+      if (display && (!map[normKey].display || display.length > map[normKey].display.length)) {
+        map[normKey].display = display
+      }
+    }
     for (const s of filtered) {
-      const name = s.products?.name
-      if (!name) continue
-      map[name] = (map[name] || 0) + (s.quantity || 0)
+      const productName = s.products?.name
+      if (productName) {
+        add(productName.replace(/\s+/g, ''), s.quantity || 0, productName)
+        continue
+      }
+      if (s.item_detail) {
+        const tokens = String(s.item_detail).split('/').map(t => t.trim()).filter(Boolean)
+        for (const token of tokens) {
+          const m = token.match(/^(.*?)(\d+)$/)
+          const name = (m ? m[1] : token).trim()
+          const qty = m ? parseInt(m[2], 10) : 1
+          add(name, qty, null)
+        }
+      }
     }
     return Object.entries(map)
-      .map(([name, qty]) => ({ name, qty }))
+      .map(([key, v]) => ({ name: v.display || key, qty: v.qty }))
       .sort((a, b) => b.qty - a.qty)
       .slice(0, 10)
   }, [filtered])
