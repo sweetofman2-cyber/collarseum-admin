@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
 import * as XLSX from 'xlsx'
@@ -54,6 +54,20 @@ export default function History() {
 
   const totalRevenue = filtered.reduce((sum, s) => sum + (s.total_price || 0), 0)
 
+  const productRanking = useMemo(() => {
+    const map = {}
+    for (const s of filtered) {
+      const name = s.products?.name
+      if (!name) continue
+      map[name] = (map[name] || 0) + (s.quantity || 0)
+    }
+    return Object.entries(map)
+      .map(([name, qty]) => ({ name, qty }))
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 10)
+  }, [filtered])
+  const maxRankingQty = productRanking[0]?.qty || 1
+
   function downloadExcel() {
     const rows = filtered.map((s, i) => ({
       번호: i + 1,
@@ -78,6 +92,30 @@ export default function History() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-800 mb-6">판매 내역</h1>
+
+      {/* 상품별 판매 순위 */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+        <h2 className="text-lg font-semibold text-gray-700 mb-1">상품별 판매 순위</h2>
+        <p className="text-xs text-gray-400 mb-4">현재 필터 기준 · 판매 수량 상위 {productRanking.length}개 상품</p>
+        {productRanking.length === 0 ? (
+          <p className="text-gray-400 text-sm py-4 text-center">표시할 상품 판매 데이터가 없습니다.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {productRanking.map(p => (
+              <div key={p.name} className="flex items-center gap-3" title={`${p.name}: ${p.qty.toLocaleString()}개`}>
+                <span className="w-28 shrink-0 text-sm text-gray-600 truncate">{p.name}</span>
+                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-brand-500 rounded-full"
+                    style={{ width: `${Math.max((p.qty / maxRankingQty) * 100, 4)}%` }}
+                  />
+                </div>
+                <span className="w-16 shrink-0 text-sm font-medium text-gray-700 text-right">{p.qty.toLocaleString()}개</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* 필터 */}
       <div className="flex flex-wrap gap-3 mb-4 items-center">
