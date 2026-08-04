@@ -55,7 +55,7 @@ export default function RevenuePage() {
       if (!map[p.key]) map[p.key] = { key: p.key, label: p.label, total: 0 }
       map[p.key].total += s.total_price || 0
     }
-    return Object.values(map).sort((a, b) => a.key.localeCompare(b.key))
+    return Object.values(map).sort((a, b) => b.key.localeCompare(a.key))
   }, [sales])
   const maxMonthly = Math.max(...monthlyTrend.map(m => m.total), 1)
 
