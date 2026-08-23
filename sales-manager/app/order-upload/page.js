@@ -202,6 +202,7 @@ export default function OrderUploadPage() {
   const [dateFrom, setDateFrom] = useState(today)
   const [dateTo, setDateTo] = useState(today)
   const [filterChannel, setFilterChannel] = useState('')
+  const [dateMode, setDateMode] = useState('ordered') // 'ordered' | 'uploaded'
 
   // 페이징
   const [pageSize, setPageSize] = useState(50)
@@ -225,25 +226,26 @@ export default function OrderUploadPage() {
 
   const loadOrders = useCallback(async () => {
     setLoadingOrders(true)
+    const dateField = dateMode === 'uploaded' ? 'sold_at' : 'ordered_at'
     let q = supabase
       .from('sales')
       .select('*, channels(name)')
       .not('order_number', 'is', null)
-      .order('ordered_at', { ascending: false })
+      .order(dateField, { ascending: false })
       .limit(10000)
 
     if (filterChannel) {
       const cid = channelMap[filterChannel]
       if (cid) q = q.eq('channel_id', cid)
     }
-    if (dateFrom) q = q.gte('ordered_at', dateFrom)
-    if (dateTo) q = q.lte('ordered_at', dateTo + 'T23:59:59')
+    if (dateFrom) q = q.gte(dateField, dateFrom)
+    if (dateTo) q = q.lte(dateField, dateTo + 'T23:59:59')
 
     const { data, error } = await q
     setLoadingOrders(false)
     if (error) { toast.error('조회 실패: ' + error.message); return }
     setOrders(data || [])
-  }, [channelMap, filterChannel, dateFrom, dateTo])
+  }, [channelMap, filterChannel, dateFrom, dateTo, dateMode])
 
   useEffect(() => {
     if (Object.keys(channelMap).length > 0) loadOrders()
@@ -394,6 +396,7 @@ export default function OrderUploadPage() {
       채널: o.channels?.name || '',
       구매제품: o.item_detail || '',
       주문일: o.ordered_at ? o.ordered_at.slice(0, 10) : '',
+      업로드시점: o.sold_at ? o.sold_at.slice(0, 16).replace('T', ' ') : '',
       비고: o.note || '',
       주문번호: o.order_number || '',
     }))
@@ -549,7 +552,26 @@ export default function OrderUploadPage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">주문일 시작</label>
+            <label className="block text-xs text-gray-500 mb-1">조회 기준</label>
+            <div className="flex rounded-lg border border-gray-300 overflow-hidden text-sm">
+              <button
+                type="button"
+                onClick={() => setDateMode('ordered')}
+                className={`px-3 py-2 transition ${dateMode === 'ordered' ? 'bg-brand-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              >
+                주문일
+              </button>
+              <button
+                type="button"
+                onClick={() => setDateMode('uploaded')}
+                className={`px-3 py-2 transition border-l border-gray-300 ${dateMode === 'uploaded' ? 'bg-brand-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              >
+                업로드일
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">{dateMode === 'uploaded' ? '업로드일 시작' : '주문일 시작'}</label>
             <input
               type="date"
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
@@ -558,7 +580,7 @@ export default function OrderUploadPage() {
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">주문일 종료</label>
+            <label className="block text-xs text-gray-500 mb-1">{dateMode === 'uploaded' ? '업로드일 종료' : '주문일 종료'}</label>
             <input
               type="date"
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
@@ -620,15 +642,16 @@ export default function OrderUploadPage() {
                 <th className="px-3 py-2 text-left">채널</th>
                 <th className="px-3 py-2 text-left">구매제품</th>
                 <th className="px-3 py-2 text-left">주문일</th>
+                <th className="px-3 py-2 text-left">업로드 시점</th>
                 <th className="px-3 py-2 text-left">비고</th>
                 <th className="px-3 py-2 text-left">주문번호</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loadingOrders ? (
-                <tr><td colSpan={9} className="text-center py-8 text-gray-400">로딩 중...</td></tr>
+                <tr><td colSpan={10} className="text-center py-8 text-gray-400">로딩 중...</td></tr>
               ) : paged.length === 0 ? (
-                <tr><td colSpan={9} className="text-center py-8 text-gray-300">데이터가 없습니다</td></tr>
+                <tr><td colSpan={10} className="text-center py-8 text-gray-300">데이터가 없습니다</td></tr>
               ) : paged.map((o, i) => (
                 <tr key={o.id} className={`hover:bg-gray-50 ${checkedIds.has(o.id) ? 'bg-brand-50' : ''}`}>
                   <td className="px-3 py-2 text-center">
@@ -644,6 +667,7 @@ export default function OrderUploadPage() {
                   </td>
                   <td className="px-3 py-2 text-gray-700 max-w-xs truncate">{o.item_detail || '-'}</td>
                   <td className="px-3 py-2 text-gray-500">{o.ordered_at ? o.ordered_at.slice(0,10) : '-'}</td>
+                  <td className="px-3 py-2 text-gray-400 text-xs">{o.sold_at ? o.sold_at.slice(0,16).replace('T', ' ') : '-'}</td>
                   <td className="px-3 py-2 text-gray-400">{o.note || '-'}</td>
                   <td className="px-3 py-2 text-gray-400 text-xs">{o.order_number || '-'}</td>
                 </tr>
