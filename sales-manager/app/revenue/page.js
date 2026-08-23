@@ -28,16 +28,28 @@ function periodOf(s) {
   return null
 }
 
+// 일별 집계: 실제 주문일(ordered_at)이 있으면 그걸 쓴다.
+// sale_month만 있고 ordered_at이 없는 건(과거 엑셀 대량 등록 데이터)은 정확한 날짜를
+// 알 수 없으므로 제외한다(대량 등록을 실행한 날에 몰아서 잡히는 왜곡 방지).
+// 둘 다 없는 개별 입력 건은 저장 시각(sold_at)을 판매일로 간주한다.
+function dayOf(s) {
+  if (s.ordered_at) return s.ordered_at.slice(0, 10)
+  if (s.sale_month) return null
+  if (s.sold_at) return s.sold_at.slice(0, 10)
+  return null
+}
+
 export default function RevenuePage() {
   const [sales, setSales] = useState([])
   const [loading, setLoading] = useState(true)
+  const [trendMode, setTrendMode] = useState('monthly') // 'yearly' | 'monthly' | 'daily'
 
   useEffect(() => {
     async function load() {
       setLoading(true)
       const { data } = await supabase
         .from('sales')
-        .select('total_price, sale_month, sold_at, channels(name)')
+        .select('total_price, sale_month, sold_at, ordered_at, channels(name)')
         .limit(10000)
       setSales(data || [])
       setLoading(false)
@@ -57,7 +69,30 @@ export default function RevenuePage() {
     }
     return Object.values(map).sort((a, b) => b.key.localeCompare(a.key))
   }, [sales])
-  const maxMonthly = Math.max(...monthlyTrend.map(m => m.total), 1)
+
+  const dailyTrend = useMemo(() => {
+    const map = {}
+    for (const s of sales) {
+      const day = dayOf(s)
+      if (!day) continue
+      if (!map[day]) map[day] = { key: day, label: day, total: 0 }
+      map[day].total += s.total_price || 0
+    }
+    return Object.values(map).sort((a, b) => b.key.localeCompare(a.key))
+  }, [sales])
+
+  const yearlyTrend = useMemo(() => {
+    const map = {}
+    for (const m of monthlyTrend) {
+      const year = m.key.slice(0, 4)
+      if (!map[year]) map[year] = { key: year, label: year, total: 0 }
+      map[year].total += m.total
+    }
+    return Object.values(map).sort((a, b) => b.key.localeCompare(a.key))
+  }, [monthlyTrend])
+
+  const trend = trendMode === 'daily' ? dailyTrend : trendMode === 'yearly' ? yearlyTrend : monthlyTrend
+  const maxTrend = Math.max(...trend.map(t => t.total), 1)
 
   const channelBreakdown = useMemo(() => {
     const map = {}
@@ -86,27 +121,60 @@ export default function RevenuePage() {
 
           {/* 기간별 매출 추이 */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-            <h2 className="text-lg font-semibold text-gray-700 mb-1">기간별 매출 추이</h2>
-            <p className="text-xs text-gray-400 mb-5">월별 매출 합계 ({monthlyTrend.length}개월)</p>
-            {monthlyTrend.length === 0 ? (
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-lg font-semibold text-gray-700">기간별 매출 추이</h2>
+              <div className="flex rounded-lg border border-gray-300 overflow-hidden text-sm">
+                <button
+                  type="button"
+                  onClick={() => setTrendMode('yearly')}
+                  className={`px-3 py-1.5 transition ${trendMode === 'yearly' ? 'bg-brand-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                >
+                  연별
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTrendMode('monthly')}
+                  className={`px-3 py-1.5 transition border-l border-gray-300 ${trendMode === 'monthly' ? 'bg-brand-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                >
+                  월별
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTrendMode('daily')}
+                  className={`px-3 py-1.5 transition border-l border-gray-300 ${trendMode === 'daily' ? 'bg-brand-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                >
+                  일별
+                </button>
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 mb-5">
+              {trendMode === 'daily'
+                ? `일별 매출 합계 (${trend.length}일) · 정확한 날짜 정보가 있는 판매 건 기준`
+                : trendMode === 'yearly'
+                ? `연도별 매출 합계 (${trend.length}년)`
+                : `월별 매출 합계 (${trend.length}개월)`}
+            </p>
+            {trend.length === 0 ? (
               <p className="text-gray-400 text-sm py-4 text-center">표시할 매출 데이터가 없습니다.</p>
             ) : (
               <div className="overflow-x-auto">
                 <div className="flex items-end gap-2 h-52 min-w-max px-1">
-                  {monthlyTrend.map(m => (
+                  {trend.map(t => (
                     <div
-                      key={m.key}
+                      key={t.key}
                       className="w-9 shrink-0 flex flex-col items-center justify-end h-full"
-                      title={`${m.label}: ${m.total.toLocaleString()}원`}
+                      title={`${t.label}: ${t.total.toLocaleString()}원`}
                     >
                       <span className="text-[10px] text-gray-500 mb-1 whitespace-nowrap">
-                        {m.total >= 10000 ? `${Math.round(m.total / 10000)}만` : m.total.toLocaleString()}
+                        {t.total >= 10000 ? `${Math.round(t.total / 10000)}만` : t.total.toLocaleString()}
                       </span>
                       <div
                         className="w-full bg-brand-500 rounded-t-md"
-                        style={{ height: `${Math.max((m.total / maxMonthly) * 100, 2)}%` }}
+                        style={{ height: `${Math.max((t.total / maxTrend) * 100, 2)}%` }}
                       />
-                      <span className="text-[10px] text-gray-400 mt-1 whitespace-nowrap">{m.label.slice(2)}</span>
+                      <span className="text-[10px] text-gray-400 mt-1 whitespace-nowrap">
+                        {trendMode === 'daily' ? t.label.slice(5) : trendMode === 'yearly' ? t.label : t.label.slice(2)}
+                      </span>
                     </div>
                   ))}
                 </div>
