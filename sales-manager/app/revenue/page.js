@@ -81,6 +81,33 @@ export default function RevenuePage() {
     return Object.values(map).sort((a, b) => b.key.localeCompare(a.key))
   }, [sales])
 
+  // 일별 보기: 연/월을 선택해서 그 달의 일자만 본다.
+  const [dailyYear, setDailyYear] = useState('')
+  const [dailyMonth, setDailyMonth] = useState('')
+
+  const dailyYearOptions = useMemo(
+    () => Array.from(new Set(dailyTrend.map(t => t.key.slice(0, 4)))).sort((a, b) => b.localeCompare(a)),
+    [dailyTrend]
+  )
+  const dailyMonthOptions = useMemo(
+    () => Array.from(new Set(dailyTrend.filter(t => t.key.slice(0, 4) === dailyYear).map(t => t.key.slice(5, 7)))).sort(),
+    [dailyTrend, dailyYear]
+  )
+
+  useEffect(() => {
+    if (dailyTrend.length === 0) return
+    if (!dailyYear || !dailyYearOptions.includes(dailyYear)) {
+      setDailyYear(dailyTrend[0].key.slice(0, 4))
+      setDailyMonth(dailyTrend[0].key.slice(5, 7))
+    }
+  }, [dailyTrend, dailyYear, dailyYearOptions])
+
+  const dailyTrendFiltered = useMemo(() => {
+    if (!dailyYear || !dailyMonth) return []
+    const prefix = `${dailyYear}-${dailyMonth}`
+    return dailyTrend.filter(t => t.key.startsWith(prefix)).sort((a, b) => a.key.localeCompare(b.key))
+  }, [dailyTrend, dailyYear, dailyMonth])
+
   const yearlyTrend = useMemo(() => {
     const map = {}
     for (const m of monthlyTrend) {
@@ -91,7 +118,7 @@ export default function RevenuePage() {
     return Object.values(map).sort((a, b) => b.key.localeCompare(a.key))
   }, [monthlyTrend])
 
-  const trend = trendMode === 'daily' ? dailyTrend : trendMode === 'yearly' ? yearlyTrend : monthlyTrend
+  const trend = trendMode === 'daily' ? dailyTrendFiltered : trendMode === 'yearly' ? yearlyTrend : monthlyTrend
   const maxTrend = Math.max(...trend.map(t => t.total), 1)
 
   const channelBreakdown = useMemo(() => {
@@ -147,9 +174,34 @@ export default function RevenuePage() {
                 </button>
               </div>
             </div>
+
+            {trendMode === 'daily' && dailyYearOptions.length > 0 && (
+              <div className="flex items-center gap-2 mb-3">
+                <select
+                  className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+                  value={dailyYear}
+                  onChange={e => {
+                    const y = e.target.value
+                    setDailyYear(y)
+                    const monthsForYear = Array.from(new Set(dailyTrend.filter(t => t.key.slice(0, 4) === y).map(t => t.key.slice(5, 7)))).sort()
+                    setDailyMonth(monthsForYear[monthsForYear.length - 1] || '')
+                  }}
+                >
+                  {dailyYearOptions.map(y => <option key={y} value={y}>{y}년</option>)}
+                </select>
+                <select
+                  className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+                  value={dailyMonth}
+                  onChange={e => setDailyMonth(e.target.value)}
+                >
+                  {dailyMonthOptions.map(m => <option key={m} value={m}>{Number(m)}월</option>)}
+                </select>
+              </div>
+            )}
+
             <p className="text-xs text-gray-400 mb-5">
               {trendMode === 'daily'
-                ? `일별 매출 합계 (${trend.length}일) · 정확한 날짜 정보가 있는 판매 건 기준`
+                ? `${dailyYear}년 ${Number(dailyMonth) || ''}월 일별 매출 합계 (${trend.length}일) · 정확한 날짜 정보가 있는 판매 건 기준`
                 : trendMode === 'yearly'
                 ? `연도별 매출 합계 (${trend.length}년)`
                 : `월별 매출 합계 (${trend.length}개월)`}
@@ -173,7 +225,7 @@ export default function RevenuePage() {
                         style={{ height: `${Math.max((t.total / maxTrend) * 100, 2)}%` }}
                       />
                       <span className="text-[10px] text-gray-400 mt-1 whitespace-nowrap">
-                        {trendMode === 'daily' ? t.label.slice(5) : trendMode === 'yearly' ? t.label : t.label.slice(2)}
+                        {trendMode === 'daily' ? `${Number(t.label.slice(8))}일` : trendMode === 'yearly' ? t.label : t.label.slice(2)}
                       </span>
                     </div>
                   ))}
