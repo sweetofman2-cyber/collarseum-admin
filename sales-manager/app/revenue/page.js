@@ -42,7 +42,7 @@ function dayOf(s) {
 export default function RevenuePage() {
   const [sales, setSales] = useState([])
   const [loading, setLoading] = useState(true)
-  const [trendMode, setTrendMode] = useState('monthly') // 'yearly' | 'monthly' | 'daily'
+  const [trendMode, setTrendMode] = useState('daily') // 'yearly' | 'monthly' | 'daily'
 
   useEffect(() => {
     async function load() {
