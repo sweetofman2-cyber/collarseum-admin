@@ -102,10 +102,18 @@ export default function RevenuePage() {
     }
   }, [dailyTrend, dailyYear, dailyYearOptions])
 
+  // 매출이 없는 날도 0원으로 표시하기 위해 선택한 달의 모든 날짜를 채워 넣는다.
   const dailyTrendFiltered = useMemo(() => {
     if (!dailyYear || !dailyMonth) return []
-    const prefix = `${dailyYear}-${dailyMonth}`
-    return dailyTrend.filter(t => t.key.startsWith(prefix)).sort((a, b) => a.key.localeCompare(b.key))
+    const byDay = {}
+    for (const t of dailyTrend) byDay[t.key] = t.total
+    const daysInMonth = new Date(Number(dailyYear), Number(dailyMonth), 0).getDate()
+    const result = []
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = `${dailyYear}-${dailyMonth}-${String(d).padStart(2, '0')}`
+      result.push({ key, label: key, total: byDay[key] || 0 })
+    }
+    return result
   }, [dailyTrend, dailyYear, dailyMonth])
 
   const yearlyTrend = useMemo(() => {
@@ -218,11 +226,11 @@ export default function RevenuePage() {
                       title={`${t.label}: ${t.total.toLocaleString()}원`}
                     >
                       <span className="text-[10px] text-gray-500 mb-1 whitespace-nowrap">
-                        {t.total >= 10000 ? `${Math.round(t.total / 10000)}만` : t.total.toLocaleString()}
+                        {t.total === 0 ? '0원' : t.total >= 10000 ? `${Math.round(t.total / 10000)}만` : t.total.toLocaleString()}
                       </span>
                       <div
-                        className="w-full bg-brand-500 rounded-t-md"
-                        style={{ height: `${Math.max((t.total / maxTrend) * 100, 2)}%` }}
+                        className={`w-full rounded-t-md ${t.total === 0 ? 'bg-gray-100' : 'bg-brand-500'}`}
+                        style={{ height: t.total === 0 ? '2%' : `${Math.max((t.total / maxTrend) * 100, 2)}%` }}
                       />
                       <span className="text-[10px] text-gray-400 mt-1 whitespace-nowrap">
                         {trendMode === 'daily' ? `${Number(t.label.slice(8))}일` : trendMode === 'yearly' ? t.label : t.label.slice(2)}
