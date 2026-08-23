@@ -49,7 +49,7 @@ export default function RevenuePage() {
       setLoading(true)
       const { data } = await supabase
         .from('sales')
-        .select('total_price, sale_month, sold_at, ordered_at, channels(name)')
+        .select('total_price, sale_month, sold_at, ordered_at, quantity, item_detail, products(name), channels(name)')
         .limit(10000)
       setSales(data || [])
       setLoading(false)
@@ -115,6 +115,77 @@ export default function RevenuePage() {
     }
     return result
   }, [dailyTrend, dailyYear, dailyMonth])
+
+  // 일별 보기에서 선택한 달에 실제로 속하는 판매 건 (정확한 날짜 정보가 있는 건만).
+  const monthSales = useMemo(() => {
+    if (!dailyYear || !dailyMonth) return []
+    const prefix = `${dailyYear}-${dailyMonth}`
+    return sales.filter(s => (dayOf(s) || '').startsWith(prefix))
+  }, [sales, dailyYear, dailyMonth])
+
+  // 선택한 달의 상품별 판매 순위 (product_id로 연결된 건 + item_detail 텍스트 건을 상품명 기준으로 합산).
+  const monthProductRanking = useMemo(() => {
+    const map = {}
+    function add(normKey, qty, display) {
+      if (!normKey || !qty) return
+      if (!map[normKey]) map[normKey] = { qty: 0, display: null }
+      map[normKey].qty += qty
+      if (display && (!map[normKey].display || display.length > map[normKey].display.length)) {
+        map[normKey].display = display
+      }
+    }
+    for (const s of monthSales) {
+      const productName = s.products?.name
+      if (productName) {
+        add(productName.replace(/\s+/g, ''), s.quantity || 0, productName)
+        continue
+      }
+      if (s.item_detail) {
+        const tokens = String(s.item_detail).split('/').map(t => t.trim()).filter(Boolean)
+        for (const token of tokens) {
+          const m = token.match(/^(.*?)(\d+)$/)
+          const name = (m ? m[1] : token).trim()
+          const qty = m ? parseInt(m[2], 10) : 1
+          add(name, qty, null)
+        }
+      }
+    }
+    return Object.entries(map)
+      .map(([key, v]) => ({ name: v.display || key, qty: v.qty }))
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 10)
+  }, [monthSales])
+  const maxMonthProductQty = monthProductRanking[0]?.qty || 1
+
+  const PIE_COLORS = ['#F5841F', '#1E2C40', '#0EA5E9', '#10B981', '#A78BFA', '#FB7185', '#D1D5DB']
+
+  // 선택한 달의 채널별 매출 비중 (상위 6개 + 나머지는 기타로 묶음).
+  const monthChannelPie = useMemo(() => {
+    const map = {}
+    for (const s of monthSales) {
+      const name = s.channels?.name || '미지정'
+      map[name] = (map[name] || 0) + (s.total_price || 0)
+    }
+    const list = Object.entries(map)
+      .map(([name, total]) => ({ name, total }))
+      .sort((a, b) => b.total - a.total)
+    const top = list.slice(0, 6)
+    const rest = list.slice(6)
+    const restTotal = rest.reduce((sum, c) => sum + c.total, 0)
+    if (restTotal > 0) top.push({ name: '기타', total: restTotal })
+    const monthTotal = list.reduce((sum, c) => sum + c.total, 0) || 1
+    let acc = 0
+    return top.map((c, i) => {
+      const pct = (c.total / monthTotal) * 100
+      const start = acc
+      acc += pct
+      return { ...c, pct, start, end: acc, color: PIE_COLORS[i % PIE_COLORS.length] }
+    })
+  }, [monthSales])
+  const monthChannelTotal = monthSales.reduce((sum, s) => sum + (s.total_price || 0), 0)
+  const monthPieGradient = monthChannelPie.length
+    ? `conic-gradient(${monthChannelPie.map(c => `${c.color} ${c.start}% ${c.end}%`).join(', ')})`
+    : null
 
   const yearlyTrend = useMemo(() => {
     const map = {}
@@ -241,6 +312,62 @@ export default function RevenuePage() {
               </div>
             )}
           </div>
+
+          {/* 일별 보기 선택 달의 상품 순위 + 채널 비중 */}
+          {trendMode === 'daily' && dailyYear && dailyMonth && (
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h2 className="text-lg font-semibold text-gray-700 mb-1">{dailyYear}년 {Number(dailyMonth)}월 상품별 판매 순위</h2>
+                <p className="text-xs text-gray-400 mb-5">판매 수량 상위 {monthProductRanking.length}개 상품</p>
+                {monthProductRanking.length === 0 ? (
+                  <p className="text-gray-400 text-sm py-4 text-center">표시할 상품 판매 데이터가 없습니다.</p>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {monthProductRanking.map(p => (
+                      <div key={p.name} className="flex items-center gap-3" title={`${p.name}: ${p.qty.toLocaleString()}개`}>
+                        <span className="w-24 shrink-0 text-sm text-gray-600 truncate">{p.name}</span>
+                        <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-brand-500 rounded-full"
+                            style={{ width: `${Math.max((p.qty / maxMonthProductQty) * 100, 4)}%` }}
+                          />
+                        </div>
+                        <span className="w-14 shrink-0 text-sm font-medium text-gray-700 text-right">{p.qty.toLocaleString()}개</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h2 className="text-lg font-semibold text-gray-700 mb-1">{dailyYear}년 {Number(dailyMonth)}월 채널별 비중</h2>
+                <p className="text-xs text-gray-400 mb-5">매출 금액 기준</p>
+                {monthChannelPie.length === 0 ? (
+                  <p className="text-gray-400 text-sm py-4 text-center">표시할 매출 데이터가 없습니다.</p>
+                ) : (
+                  <div className="flex items-center gap-6">
+                    <div className="relative w-36 h-36 shrink-0 rounded-full" style={{ background: monthPieGradient }}>
+                      <div className="absolute inset-[18%] bg-white rounded-full flex flex-col items-center justify-center">
+                        <span className="text-[10px] text-gray-400">합계</span>
+                        <span className="text-xs font-semibold text-gray-700">
+                          {monthChannelTotal >= 10000 ? `${Math.round(monthChannelTotal / 10000)}만원` : `${monthChannelTotal.toLocaleString()}원`}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2 min-w-0">
+                      {monthChannelPie.map(c => (
+                        <div key={c.name} className="flex items-center gap-2 text-sm" title={`${c.name}: ${c.total.toLocaleString()}원 (${c.pct.toFixed(1)}%)`}>
+                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c.color }} />
+                          <span className="text-gray-600 truncate">{c.name}</span>
+                          <span className="ml-auto text-gray-400 text-xs shrink-0">{c.pct.toFixed(1)}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* 채널별 매출 비중 */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
